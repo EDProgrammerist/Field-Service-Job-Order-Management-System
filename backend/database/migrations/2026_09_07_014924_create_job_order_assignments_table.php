@@ -13,7 +13,21 @@ return new class extends Migration
     {
         Schema::create('job_order_assignments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('job_order_id')
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignId('technician_id')
+                ->constrained()
+                ->restrictOnDelete();
+            $table->foreignId('assigned_by')
+                ->constrained('users')
+                ->restrictOnDelete();
+            $table->timestamp('assigned_at')->useCurrent();
+            $table->timestamp('unassigned_at')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
+
+            $table->index(['technician_id', 'unassigned_at']);
         });
     }
 

@@ -13,7 +13,24 @@ return new class extends Migration
     {
         Schema::create('job_order_status_history', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('job_order_id')
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->enum('status', [
+                'created',
+                'assigned',
+                'in_progress',
+                'completed',
+                'closed',
+                'cancelled',
+            ]);
+            $table->foreignId('changed_by')
+                ->constrained('users')
+                ->restrictOnDelete();
+            $table->text('remarks')->nullable();
             $table->timestamps();
+
+            $table->index(['job_order_id', 'created_at']);
         });
     }
 
