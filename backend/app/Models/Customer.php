@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
@@ -21,4 +22,12 @@ class Customer extends Model
         'phone',
         'address',
     ];
+
+    /**
+     * Get the job orders belonging to this customer.
+     */
+    public function jobOrders(): HasMany
+    {
+        return $this->hasMany(JobOrder::class);
+    }
 }

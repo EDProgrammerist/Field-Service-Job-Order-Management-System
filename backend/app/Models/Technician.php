@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Technician extends Model
 {
@@ -29,6 +30,14 @@ class Technician extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the job-order assignments for this technician.
+     */
+    public function jobOrderAssignments(): HasMany
+    {
+        return $this->hasMany(JobOrderAssignment::class);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -42,6 +43,22 @@ class User extends Authenticatable
     public function technician(): HasOne
     {
         return $this->hasOne(Technician::class);
+    }
+
+    /**
+     * Get the job orders created by this user.
+     */
+    public function createdJobOrders(): HasMany
+    {
+        return $this->hasMany(JobOrder::class, 'created_by');
+    }
+
+    /**
+     * Get job-order assignments made by this user.
+     */
+    public function assignedJobOrderAssignments(): HasMany
+    {
+        return $this->hasMany(JobOrderAssignment::class, 'assigned_by');
     }
 
     /**
