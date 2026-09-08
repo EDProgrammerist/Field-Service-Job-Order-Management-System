@@ -11,6 +11,11 @@ class JobOrderStatusHistory extends Model
     use HasFactory;
 
     /**
+     * The database table used by this model.
+     */
+    protected $table = 'job_order_status_history';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
