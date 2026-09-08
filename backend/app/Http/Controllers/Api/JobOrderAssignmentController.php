@@ -66,15 +66,13 @@ class JobOrderAssignmentController extends Controller
      */
     public function unassign(
         JobOrderAssignment $jobOrderAssignment,
-        JobOrderAssignmentService $assignmentService
+        JobOrderAssignmentService $assignmentService,
+        Request $request
     ): JsonResponse {
-        $assignment = $assignmentService->unassign($jobOrderAssignment);
-
-        $assignment->load([
-            'jobOrder:id,job_order_number,status',
-            'technician.user:id,name,email,role',
-            'assignedBy:id,name,email,role',
-        ]);
+        $assignment = $assignmentService->unassign(
+            $jobOrderAssignment,
+            $request->user()->id
+        );
 
         return response()->json([
             'message' => 'Job order assignment ended successfully.',

@@ -82,6 +82,14 @@ class JobOrder extends Model
     }
 
     /**
+     * Get all status-history records for this job order.
+     */
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(JobOrderStatusHistory::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

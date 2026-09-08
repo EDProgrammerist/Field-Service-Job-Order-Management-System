@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\JobOrder;
 use App\Models\JobOrderAssignment;
+use App\Models\JobOrderStatusHistory;
 use App\Models\Technician;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -82,6 +83,13 @@ class JobOrderAssignmentService
                 $lockedJobOrder->update([
                     'status' => 'assigned',
                 ]);
+
+                JobOrderStatusHistory::create([
+                    'job_order_id' => $lockedJobOrder->id,
+                    'status' => 'assigned',
+                    'changed_by' => $assignedBy,
+                    'remarks' => 'Technician assigned.',
+                ]);
             }
 
             return $assignment;
@@ -91,9 +99,11 @@ class JobOrderAssignmentService
     /**
      * End an active job-order assignment.
      */
-    public function unassign(JobOrderAssignment $assignment): JobOrderAssignment
-    {
-        return DB::transaction(function () use ($assignment) {
+    public function unassign(
+        JobOrderAssignment $assignment,
+        int $changedBy
+    ): JobOrderAssignment {
+        return DB::transaction(function () use ($assignment, $changedBy) {
             $lockedAssignment = JobOrderAssignment::query()
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
@@ -122,6 +132,13 @@ class JobOrderAssignmentService
             if (! $hasActiveAssignment && $jobOrder->status === 'assigned') {
                 $jobOrder->update([
                     'status' => 'created',
+                ]);
+
+                JobOrderStatusHistory::create([
+                    'job_order_id' => $jobOrder->id,
+                    'status' => 'created',
+                    'changed_by' => $changedBy,
+                    'remarks' => 'Technician assignment ended.',
                 ]);
             }
 

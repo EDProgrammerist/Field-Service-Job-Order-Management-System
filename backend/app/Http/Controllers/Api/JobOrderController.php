@@ -21,7 +21,10 @@ class JobOrderController extends Controller
         $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
 
         $jobOrders = JobOrder::query()
-            ->with($this->jobOrderRelations())
+            ->with([
+                'customer:id,name,contact_person,email,phone',
+                'creator:id,name,email,role',
+            ])
             ->when(
                 $request->filled('status'),
                 fn ($query) => $query->where('status', $request->input('status'))
@@ -45,37 +48,6 @@ class JobOrderController extends Controller
     }
 
     /**
-     * Display job orders currently assigned to the authenticated technician.
-     */
-    public function myJobOrders(Request $request): JsonResponse
-    {
-        $technician = $request->user()->technician;
-
-        if (! $technician) {
-            return response()->json([
-                'message' => 'No technician profile exists for this user.',
-            ], 404);
-        }
-
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
-
-        $jobOrders = JobOrder::query()
-            ->whereHas('assignments', function ($query) use ($technician) {
-                $query->where('technician_id', $technician->id)
-                    ->whereNull('unassigned_at');
-            })
-            ->with($this->jobOrderRelations())
-            ->orderByDesc('scheduled_at')
-            ->paginate($perPage)
-            ->withQueryString();
-
-        return response()->json([
-            'message' => 'Assigned job orders retrieved successfully.',
-            'data' => $jobOrders,
-        ]);
-    }
-
-    /**
      * Store a newly created job order.
      */
     public function store(
@@ -91,7 +63,10 @@ class JobOrderController extends Controller
             ]);
         });
 
-        $jobOrder->load($this->jobOrderRelations());
+        $jobOrder->load([
+            'customer:id,name,contact_person,email,phone',
+            'creator:id,name,email,role',
+        ]);
 
         return response()->json([
             'message' => 'Job order created successfully.',
@@ -104,7 +79,10 @@ class JobOrderController extends Controller
      */
     public function show(JobOrder $jobOrder): JsonResponse
     {
-        $jobOrder->load($this->jobOrderRelations());
+        $jobOrder->load([
+            'customer:id,name,contact_person,email,phone',
+            'creator:id,name,email,role',
+        ]);
 
         return response()->json([
             'message' => 'Job order retrieved successfully.',
@@ -121,23 +99,17 @@ class JobOrderController extends Controller
     ): JsonResponse {
         $jobOrder->update($request->validated());
 
-        return response()->json([
-            'message' => 'Job order updated successfully.',
-            'data' => $jobOrder->fresh()->load($this->jobOrderRelations()),
-        ]);
-    }
-
-    /**
-     * Define the relationships returned with job orders.
-     *
-     * @return array<int, string>
-     */
-    private function jobOrderRelations(): array
-    {
-        return [
+        $jobOrder->load([
             'customer:id,name,contact_person,email,phone',
             'creator:id,name,email,role',
-            'activeAssignment.technician.user:id,name,email,role',
-        ];
+        ]);
+
+        return response()->json([
+            'message' => 'Job order updated successfully.',
+            'data' => $jobOrder->fresh()->load([
+                'customer:id,name,contact_person,email,phone',
+                'creator:id,name,email,role',
+            ]),
+        ]);
     }
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\JobOrderAssignmentController;
 use App\Http\Controllers\Api\JobOrderController;
+use App\Http\Controllers\Api\JobOrderStatusHistoryController;
 use App\Http\Controllers\Api\TechnicianController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,11 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::middleware('role:admin,dispatcher,technician')->patch(
+        '/job-orders/{jobOrder}/status',
+        [JobOrderController::class, 'updateStatus']
+    );
 
     Route::middleware('role:technician')->group(function () {
         Route::get('/technicians/me', [TechnicianController::class, 'me']);
@@ -45,6 +51,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch(
             '/job-order-assignments/{jobOrderAssignment}/unassign',
             [JobOrderAssignmentController::class, 'unassign']
+        );
+
+        Route::get(
+            '/job-orders/{jobOrder}/status-history',
+            [JobOrderStatusHistoryController::class, 'index']
         );
     });
 

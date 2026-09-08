@@ -18,6 +18,11 @@ class EnsureUserHasRole
         if (! $user || ! in_array($user->role, $roles, true)) {
             return response()->json([
                 'message' => 'You do not have permission to perform this action.',
+                'errors' => [
+                    'role' => [
+                        'Your account role is not allowed to access this resource.',
+                    ],
+                ],
             ], 403);
         }
 

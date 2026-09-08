@@ -62,6 +62,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get job-order status changes made by this user.
+     */
+    public function jobOrderStatusChanges(): HasMany
+    {
+        return $this->hasMany(JobOrderStatusHistory::class, 'changed_by');
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
