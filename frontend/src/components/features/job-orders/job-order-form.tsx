@@ -8,15 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorDetails } from "@/lib/api-errors";
 import { getAllCustomers } from "@/services/customers";
-import { createJobOrder } from "@/services/job-orders";
+import {
+  createJobOrder,
+  getJobOrder,
+  updateJobOrder,
+} from "@/services/job-orders";
 import type { Customer } from "@/types/customer";
 import type {
   CreateJobOrderPayload,
+  JobOrder,
   JobOrderPriority,
 } from "@/types/job-order";
 
 interface JobOrderFormProps {
   listPath: string;
+  jobOrderId?: number;
 }
 
 interface JobOrderFormValues {
@@ -37,6 +43,35 @@ const emptyValues: JobOrderFormValues = {
   scheduledAt: "",
 };
 
+function formatDateTimeLocal(value: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const pad = (number: number) => String(number).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate(),
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toFormValues(jobOrder: JobOrder): JobOrderFormValues {
+  return {
+    customerId: String(jobOrder.customer_id),
+    title: jobOrder.title,
+    description: jobOrder.description ?? "",
+    serviceAddress: jobOrder.service_address ?? "",
+    priority: jobOrder.priority,
+    scheduledAt: formatDateTimeLocal(jobOrder.scheduled_at),
+  };
+}
+
 function toPayload(values: JobOrderFormValues): CreateJobOrderPayload {
   return {
     customer_id: Number(values.customerId),
@@ -48,40 +83,58 @@ function toPayload(values: JobOrderFormValues): CreateJobOrderPayload {
   };
 }
 
-export function JobOrderForm({ listPath }: JobOrderFormProps) {
+export function JobOrderForm({
+  listPath,
+  jobOrderId,
+}: JobOrderFormProps) {
   const navigate = useNavigate();
+  const isEditing = typeof jobOrderId === "number";
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [values, setValues] = useState<JobOrderFormValues>(emptyValues);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [customerError, setCustomerError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadCustomers = useCallback(async () => {
-    setIsLoadingCustomers(true);
-    setCustomerError("");
+  const loadFormData = useCallback(async () => {
+    setIsLoadingData(true);
+    setLoadError("");
 
     try {
-      const loadedCustomers = await getAllCustomers();
+      const customersRequest = getAllCustomers();
+      const jobOrderRequest =
+        typeof jobOrderId === "number"
+          ? getJobOrder(jobOrderId)
+          : Promise.resolve(null);
+
+      const [loadedCustomers, jobOrderResponse] = await Promise.all([
+        customersRequest,
+        jobOrderRequest,
+      ]);
+
       setCustomers(loadedCustomers);
+
+      if (jobOrderResponse) {
+        setValues(toFormValues(jobOrderResponse.data));
+      }
     } catch (error) {
       const details = getApiErrorDetails(
         error,
-        "Unable to load customers. Please try again.",
+        "Unable to load the job order form. Please try again.",
       );
 
-      setCustomerError(details.message);
+      setLoadError(details.message);
     } finally {
-      setIsLoadingCustomers(false);
+      setIsLoadingData(false);
     }
-  }, []);
+  }, [jobOrderId]);
 
   useEffect(() => {
-    void loadCustomers();
-  }, [loadCustomers]);
+    void loadFormData();
+  }, [loadFormData]);
 
   function updateValue(field: keyof JobOrderFormValues, value: string) {
     setValues((currentValues) => ({
@@ -97,8 +150,8 @@ export function JobOrderForm({ listPath }: JobOrderFormProps) {
             ? "service_address"
             : field;
 
-      const { [errorField]: ignoredError, ...remainingErrors } =
-        currentErrors;
+      const remainingErrors = { ...currentErrors };
+      delete remainingErrors[errorField];
 
       return remainingErrors;
     });
@@ -126,12 +179,19 @@ export function JobOrderForm({ listPath }: JobOrderFormProps) {
     setIsSubmitting(true);
 
     try {
-      const response = await createJobOrder(toPayload(values));
+      const payload = toPayload(values);
+      const response =
+        isEditing && typeof jobOrderId === "number"
+          ? await updateJobOrder(jobOrderId, payload)
+          : await createJobOrder(payload);
+
       setSuccessMessage(response.message);
     } catch (error) {
       const details = getApiErrorDetails(
         error,
-        "Unable to create the job order. Please try again.",
+        isEditing
+          ? "Unable to update the job order. Please try again."
+          : "Unable to create the job order. Please try again.",
       );
 
       setSubmitError(details.message);
@@ -141,6 +201,42 @@ export function JobOrderForm({ listPath }: JobOrderFormProps) {
     }
   }
 
+  if (isLoadingData) {
+    return (
+      <section
+        className="mx-auto max-w-3xl rounded-xl border bg-card p-6 text-sm text-muted-foreground shadow-sm"
+        role="status"
+      >
+        Loading job order form...
+      </section>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <section className="mx-auto flex max-w-3xl flex-col items-start gap-4 rounded-xl border border-destructive/30 bg-destructive/10 p-6">
+        <p className="text-sm text-destructive" role="alert">
+          {loadError}
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => void loadFormData()}>
+            <RefreshCw />
+            Try again
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(listPath)}
+          >
+            Cancel
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
   if (successMessage) {
     return (
       <section className="mx-auto max-w-3xl">
@@ -148,7 +244,9 @@ export function JobOrderForm({ listPath }: JobOrderFormProps) {
           className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-emerald-700 dark:text-emerald-400"
           role="status"
         >
-          <h2 className="text-lg font-semibold">Job order created</h2>
+          <h2 className="text-lg font-semibold">
+            {isEditing ? "Job order updated" : "Job order created"}
+          </h2>
           <p className="mt-2 text-sm">{successMessage}</p>
 
           <Button
@@ -184,13 +282,7 @@ export function JobOrderForm({ listPath }: JobOrderFormProps) {
               role="radiogroup"
               aria-label="Customer"
             >
-              {isLoadingCustomers ? (
-                <p className="p-2 text-sm text-muted-foreground">
-                  Loading customers...
-                </p>
-              ) : null}
-
-              {!isLoadingCustomers && customers.length === 0 ? (
+              {customers.length === 0 ? (
                 <p className="p-2 text-sm text-destructive">
                   No customers were loaded.
                 </p>
@@ -224,21 +316,6 @@ export function JobOrderForm({ listPath }: JobOrderFormProps) {
                 );
               })}
             </div>
-
-            {customerError ? (
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-destructive">{customerError}</p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => void loadCustomers()}
-                >
-                  <RefreshCw />
-                  Retry
-                </Button>
-              </div>
-            ) : null}
 
             {fieldErrors.customer_id ? (
               <p className="text-xs text-destructive">
@@ -340,15 +417,14 @@ export function JobOrderForm({ listPath }: JobOrderFormProps) {
             Cancel
           </Button>
 
-          <Button
-            type="submit"
-            disabled={
-              isSubmitting ||
-              isLoadingCustomers ||
-              Boolean(customerError)
-            }
-          >
-            {isSubmitting ? "Creating..." : "Create job order"}
+          <Button type="submit" disabled={isSubmitting || customers.length === 0}>
+            {isSubmitting
+              ? isEditing
+                ? "Saving..."
+                : "Creating..."
+              : isEditing
+                ? "Save changes"
+                : "Create job order"}
           </Button>
         </div>
       </section>

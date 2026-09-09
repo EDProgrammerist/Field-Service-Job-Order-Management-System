@@ -1,9 +1,10 @@
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Eye } from "lucide-react";
 
 import {
   JobOrderPriorityBadge,
   JobOrderStatusBadge,
 } from "@/components/features/job-orders/job-order-badges";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -18,6 +19,7 @@ import type { JobOrder } from "@/types/job-order";
 interface JobOrderTableProps {
   isLoading: boolean;
   jobOrders: JobOrder[];
+  onView: (jobOrder: JobOrder) => void;
 }
 
 function formatScheduledDate(value: string | null) {
@@ -38,6 +40,7 @@ function technicianName(jobOrder: JobOrder) {
 export function JobOrderTable({
   isLoading,
   jobOrders,
+  onView,
 }: JobOrderTableProps) {
   if (isLoading) {
     return (
@@ -57,8 +60,7 @@ export function JobOrderTable({
         </div>
         <h3 className="mt-4 text-base font-semibold">No job orders found</h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          Change the selected filters or create a new job order in the next
-          step.
+          Change the selected filters or create a new job order.
         </p>
       </div>
     );
@@ -99,8 +101,18 @@ export function JobOrderTable({
               </p>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-4 flex items-center justify-between">
               <JobOrderPriorityBadge priority={jobOrder.priority} />
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onView(jobOrder)}
+              >
+                <Eye />
+                View
+              </Button>
             </div>
           </article>
         ))}
@@ -116,6 +128,7 @@ export function JobOrderTable({
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Scheduled</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -138,6 +151,17 @@ export function JobOrderTable({
                 </TableCell>
                 <TableCell>
                   {formatScheduledDate(jobOrder.scheduled_at)}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`View ${jobOrder.job_order_number}`}
+                    onClick={() => onView(jobOrder)}
+                  >
+                    <Eye />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

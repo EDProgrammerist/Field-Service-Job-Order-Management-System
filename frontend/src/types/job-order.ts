@@ -52,6 +52,16 @@ export interface ActiveJobOrderAssignment {
   technician: JobOrderTechnician;
 }
 
+export interface JobOrderStatusHistory {
+  id: number;
+  job_order_id: number;
+  status: JobOrderStatus;
+  changed_by: JobOrderCreator;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface JobOrder {
   id: number;
   job_order_number: string;
@@ -81,7 +91,22 @@ export interface CreateJobOrderPayload {
   scheduled_at: string | null;
 }
 
+export type UpdateJobOrderPayload = CreateJobOrderPayload;
+
+export interface UpdateJobOrderStatusPayload {
+  status: JobOrderStatus;
+  remarks: string | null;
+}
+
 export interface JobOrderResponse {
   message: string;
   data: JobOrder;
+}
+
+export interface UpdateJobOrderStatusResponse {
+  message: string;
+  data: {
+    job_order: JobOrder;
+    status_history: JobOrderStatusHistory;
+  };
 }

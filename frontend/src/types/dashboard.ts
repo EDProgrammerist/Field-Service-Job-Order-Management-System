@@ -9,3 +9,12 @@ export interface AdminDashboardData {
   totalTechnicians: number;
   recentJobOrders: JobOrder[];
 }
+
+export interface DispatcherDashboardData {
+  unassignedJobOrderCount: number;
+  assignedJobOrderCount: number;
+  activeJobOrderCount: number;
+  activeTechnicianCount: number;
+  unassignedJobOrders: JobOrder[];
+  recentJobOrders: JobOrder[];
+}

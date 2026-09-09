@@ -6,13 +6,18 @@ import { useAuth } from "@/contexts/auth-context";
 import AdminCustomersPage from "@/pages/admin/customers";
 import AdminDashboardPage from "@/pages/admin/dashboard";
 import AdminCreateJobOrderPage from "@/pages/admin/job-orders/create";
+import AdminJobOrderDetailsPage from "@/pages/admin/job-orders/details";
+import AdminEditJobOrderPage from "@/pages/admin/job-orders/edit";
 import AdminJobOrdersPage from "@/pages/admin/job-orders";
 import AdminTechniciansPage from "@/pages/admin/technicians";
 import LoginPage from "@/pages/auth/login";
 import UnauthorizedPage from "@/pages/auth/unauthorized";
 import DispatcherCreateJobOrderPage from "@/pages/dispatcher/job-orders/create";
+import DispatcherJobOrderDetailsPage from "@/pages/dispatcher/job-orders/details";
+import DispatcherEditJobOrderPage from "@/pages/dispatcher/job-orders/edit";
 import DispatcherJobOrdersPage from "@/pages/dispatcher/job-orders";
 import DispatcherTechniciansPage from "@/pages/dispatcher/technicians";
+import DispatcherDashboardPage from "@/pages/dispatcher/dashboard";
 
 function RoleDestinationPage() {
   const { user } = useAuth();
@@ -78,12 +83,28 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin/job-orders/:jobOrderId/edit"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminEditJobOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/job-orders/:jobOrderId"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminJobOrderDetailsPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/dispatcher/dashboard"
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
-            <RoleDestinationPage />
+            <DispatcherDashboardPage />
           </ProtectedRoute>
         }
       />
@@ -108,6 +129,22 @@ export function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
             <DispatcherCreateJobOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dispatcher/job-orders/:jobOrderId/edit"
+        element={
+          <ProtectedRoute allowedRoles={["dispatcher"]}>
+            <DispatcherEditJobOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dispatcher/job-orders/:jobOrderId"
+        element={
+          <ProtectedRoute allowedRoles={["dispatcher"]}>
+            <DispatcherJobOrderDetailsPage />
           </ProtectedRoute>
         }
       />
