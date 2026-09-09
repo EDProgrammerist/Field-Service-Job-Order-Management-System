@@ -7,15 +7,15 @@
     "variable": [
         {
             "key": "base_url",
-            "value": "http://127.0.0.1:8000/api"
+            "value": "http://localhost:8000/api"
         },
         {
             "key": "admin_email",
-            "value": "admin@fieldservice.test"
+            "value": ""
         },
         {
             "key": "admin_password",
-            "value": "Password123!"
+            "value": ""
         },
         {
             "key": "technician_email",
@@ -23,7 +23,7 @@
         },
         {
             "key": "technician_password",
-            "value": "Technician123!"
+            "value": ""
         },
         {
             "key": "admin_token",
