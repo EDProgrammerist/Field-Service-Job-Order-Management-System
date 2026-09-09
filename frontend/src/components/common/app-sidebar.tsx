@@ -1,4 +1,5 @@
 import {
+  ClipboardList,
   LayoutDashboard,
   UsersRound,
   Wrench,
@@ -40,6 +41,11 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
       icon: LayoutDashboard,
     },
     {
+      label: "Job Orders",
+      href: "/admin/job-orders",
+      icon: ClipboardList,
+    },
+    {
       label: "Customers",
       href: "/admin/customers",
       icon: UsersRound,
@@ -55,6 +61,11 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
       label: "Dashboard",
       href: "/dispatcher/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      label: "Job Orders",
+      href: "/dispatcher/job-orders",
+      icon: ClipboardList,
     },
     {
       label: "Technicians",
@@ -116,7 +127,6 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
-
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (

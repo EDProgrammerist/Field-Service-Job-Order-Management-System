@@ -5,9 +5,13 @@ import { ProtectedRoute } from "@/components/features/auth/protected-route";
 import { useAuth } from "@/contexts/auth-context";
 import AdminCustomersPage from "@/pages/admin/customers";
 import AdminDashboardPage from "@/pages/admin/dashboard";
+import AdminCreateJobOrderPage from "@/pages/admin/job-orders/create";
+import AdminJobOrdersPage from "@/pages/admin/job-orders";
 import AdminTechniciansPage from "@/pages/admin/technicians";
 import LoginPage from "@/pages/auth/login";
 import UnauthorizedPage from "@/pages/auth/unauthorized";
+import DispatcherCreateJobOrderPage from "@/pages/dispatcher/job-orders/create";
+import DispatcherJobOrdersPage from "@/pages/dispatcher/job-orders";
 import DispatcherTechniciansPage from "@/pages/dispatcher/technicians";
 
 function RoleDestinationPage() {
@@ -22,10 +26,6 @@ function RoleDestinationPage() {
         <h2 className="mt-2 text-2xl font-semibold tracking-tight">
           Dashboard shell is ready
         </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Navigation, responsive sidebar behavior, account controls, and logout
-          are now shared across protected pages.
-        </p>
       </section>
     </DashboardLayout>
   );
@@ -46,7 +46,6 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/admin/customers"
         element={
@@ -55,12 +54,27 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/admin/technicians"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminTechniciansPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/job-orders"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminJobOrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/job-orders/create"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminCreateJobOrderPage />
           </ProtectedRoute>
         }
       />
@@ -73,12 +87,27 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dispatcher/technicians"
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
             <DispatcherTechniciansPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dispatcher/job-orders"
+        element={
+          <ProtectedRoute allowedRoles={["dispatcher"]}>
+            <DispatcherJobOrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dispatcher/job-orders/create"
+        element={
+          <ProtectedRoute allowedRoles={["dispatcher"]}>
+            <DispatcherCreateJobOrderPage />
           </ProtectedRoute>
         }
       />

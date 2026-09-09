@@ -1,3 +1,5 @@
+import type { UserRole } from "@/types/auth";
+
 export type JobOrderPriority = "low" | "normal" | "high" | "urgent";
 
 export type JobOrderStatus =
@@ -16,6 +18,40 @@ export interface JobOrderCustomer {
   phone: string;
 }
 
+export interface JobOrderCreator {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface JobOrderTechnicianUser {
+  id: number;
+  name: string;
+  email: string;
+  role: "technician";
+}
+
+export interface JobOrderTechnician {
+  id: number;
+  employee_number: string;
+  phone: string | null;
+  specialization: string | null;
+  is_active: boolean;
+  user: JobOrderTechnicianUser;
+}
+
+export interface ActiveJobOrderAssignment {
+  id: number;
+  job_order_id: number;
+  technician_id: number;
+  assigned_by: number;
+  assigned_at: string;
+  unassigned_at: string | null;
+  notes: string | null;
+  technician: JobOrderTechnician;
+}
+
 export interface JobOrder {
   id: number;
   job_order_number: string;
@@ -32,4 +68,20 @@ export interface JobOrder {
   created_at: string;
   updated_at: string;
   customer: JobOrderCustomer;
+  creator: JobOrderCreator;
+  active_assignment: ActiveJobOrderAssignment | null;
+}
+
+export interface CreateJobOrderPayload {
+  customer_id: number;
+  title: string;
+  description: string | null;
+  service_address: string | null;
+  priority: JobOrderPriority;
+  scheduled_at: string | null;
+}
+
+export interface JobOrderResponse {
+  message: string;
+  data: JobOrder;
 }

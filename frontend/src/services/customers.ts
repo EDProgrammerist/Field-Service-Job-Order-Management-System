@@ -23,6 +23,30 @@ export async function getCustomers(
   return response.data;
 }
 
+export async function getAllCustomers(): Promise<Customer[]> {
+  const firstResponse = await getCustomers({
+    page: 1,
+    per_page: 100,
+  });
+
+  const customers = [...firstResponse.data.data];
+
+  for (
+    let page = 2;
+    page <= firstResponse.data.last_page;
+    page += 1
+  ) {
+    const response = await getCustomers({
+      page,
+      per_page: 100,
+    });
+
+    customers.push(...response.data.data);
+  }
+
+  return customers;
+}
+
 export async function createCustomer(
   payload: CustomerPayload,
 ): Promise<CustomerResponse> {

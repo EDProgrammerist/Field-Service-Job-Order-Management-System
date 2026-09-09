@@ -3,7 +3,7 @@ import axios from "axios";
 export const AUTH_TOKEN_STORAGE_KEY = "field-service-auth-token";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: "http://127.0.0.1:8001/api",
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
