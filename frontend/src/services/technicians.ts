@@ -2,9 +2,9 @@ import api from "@/lib/axios";
 import type {
   CreateTechnicianPayload,
   Technician,
+  TechnicianPayload,
   TechnicianResponse,
   TechnicianUser,
-  TechnicianPayload,
 } from "@/types/technician";
 import type { PaginatedResponse } from "@/types/pagination";
 
@@ -30,6 +30,12 @@ export async function getTechnicians(
     "/technicians",
     { params },
   );
+
+  return response.data;
+}
+
+export async function getMyTechnician(): Promise<TechnicianResponse> {
+  const response = await api.get<TechnicianResponse>("/technicians/me");
 
   return response.data;
 }

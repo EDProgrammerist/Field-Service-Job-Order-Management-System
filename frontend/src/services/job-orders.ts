@@ -19,12 +19,30 @@ export interface GetJobOrdersParams {
   status?: JobOrderStatus;
 }
 
+export interface GetMyJobOrdersParams {
+  page?: number;
+  per_page?: number;
+}
+
 export async function getJobOrders(
   params: GetJobOrdersParams = {},
 ): Promise<PaginatedResponse<JobOrder>> {
   const response = await api.get<PaginatedResponse<JobOrder>>("/job-orders", {
     params,
   });
+
+  return response.data;
+}
+
+export async function getMyJobOrders(
+  params: GetMyJobOrdersParams = {},
+): Promise<PaginatedResponse<JobOrder>> {
+  const response = await api.get<PaginatedResponse<JobOrder>>(
+    "/my-job-orders",
+    {
+      params,
+    },
+  );
 
   return response.data;
 }

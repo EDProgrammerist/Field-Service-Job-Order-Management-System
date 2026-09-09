@@ -55,6 +55,11 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
       href: "/admin/technicians",
       icon: UsersRound,
     },
+    {
+      label: "Users",
+      href: "/admin/users",
+      icon: UsersRound,
+    },
   ],
   dispatcher: [
     {
@@ -78,6 +83,11 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
       label: "Dashboard",
       href: "/technician/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      label: "My Jobs",
+      href: "/technician/my-jobs",
+      icon: ClipboardList,
     },
   ],
 };

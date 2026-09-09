@@ -1,8 +1,6 @@
 import { Navigate, Route, Routes } from "react-router";
 
-import { DashboardLayout } from "@/components/common/dashboard-layout";
 import { ProtectedRoute } from "@/components/features/auth/protected-route";
-import { useAuth } from "@/contexts/auth-context";
 import AdminCustomersPage from "@/pages/admin/customers";
 import AdminDashboardPage from "@/pages/admin/dashboard";
 import AdminCreateJobOrderPage from "@/pages/admin/job-orders/create";
@@ -10,31 +8,19 @@ import AdminJobOrderDetailsPage from "@/pages/admin/job-orders/details";
 import AdminEditJobOrderPage from "@/pages/admin/job-orders/edit";
 import AdminJobOrdersPage from "@/pages/admin/job-orders";
 import AdminTechniciansPage from "@/pages/admin/technicians";
+import AdminUsersPage from "@/pages/admin/users";
 import LoginPage from "@/pages/auth/login";
 import UnauthorizedPage from "@/pages/auth/unauthorized";
+import DispatcherDashboardPage from "@/pages/dispatcher/dashboard";
 import DispatcherCreateJobOrderPage from "@/pages/dispatcher/job-orders/create";
 import DispatcherJobOrderDetailsPage from "@/pages/dispatcher/job-orders/details";
 import DispatcherEditJobOrderPage from "@/pages/dispatcher/job-orders/edit";
 import DispatcherJobOrdersPage from "@/pages/dispatcher/job-orders";
 import DispatcherTechniciansPage from "@/pages/dispatcher/technicians";
-import DispatcherDashboardPage from "@/pages/dispatcher/dashboard";
-
-function RoleDestinationPage() {
-  const { user } = useAuth();
-
-  return (
-    <DashboardLayout>
-      <section className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm sm:p-8">
-        <p className="text-sm font-medium text-muted-foreground">
-          {user?.role ?? "Authenticated"} workspace
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-          Dashboard shell is ready
-        </h2>
-      </section>
-    </DashboardLayout>
-  );
-}
+import NotFoundPage from "@/pages/not-found";
+import TechnicianDashboardPage from "@/pages/technician/dashboard";
+import TechnicianJobOrderDetailsPage from "@/pages/technician/my-jobs/details";
+import TechnicianMyJobsPage from "@/pages/technician/my-jobs";
 
 export function AppRoutes() {
   return (
@@ -64,6 +50,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminTechniciansPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminUsersPage />
           </ProtectedRoute>
         }
       />
@@ -153,12 +147,28 @@ export function AppRoutes() {
         path="/technician/dashboard"
         element={
           <ProtectedRoute allowedRoles={["technician"]}>
-            <RoleDestinationPage />
+            <TechnicianDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technician/my-jobs"
+        element={
+          <ProtectedRoute allowedRoles={["technician"]}>
+            <TechnicianMyJobsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technician/my-jobs/:jobOrderId"
+        element={
+          <ProtectedRoute allowedRoles={["technician"]}>
+            <TechnicianJobOrderDetailsPage />
           </ProtectedRoute>
         }
       />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
