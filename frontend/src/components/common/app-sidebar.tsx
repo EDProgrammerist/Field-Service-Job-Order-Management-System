@@ -1,4 +1,9 @@
-import { LayoutDashboard, Wrench } from "lucide-react";
+import {
+  LayoutDashboard,
+  UsersRound,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 import {
@@ -24,7 +29,7 @@ import type { UserRole } from "@/types/auth";
 interface NavigationItem {
   label: string;
   href: string;
-  icon: typeof LayoutDashboard;
+  icon: LucideIcon;
 }
 
 const navigationByRole: Record<UserRole, NavigationItem[]> = {
@@ -34,12 +39,27 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
       href: "/admin/dashboard",
       icon: LayoutDashboard,
     },
+    {
+      label: "Customers",
+      href: "/admin/customers",
+      icon: UsersRound,
+    },
+    {
+      label: "Technicians",
+      href: "/admin/technicians",
+      icon: UsersRound,
+    },
   ],
   dispatcher: [
     {
       label: "Dashboard",
       href: "/dispatcher/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      label: "Technicians",
+      href: "/dispatcher/technicians",
+      icon: UsersRound,
     },
   ],
   technician: [

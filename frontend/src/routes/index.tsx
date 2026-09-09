@@ -3,8 +3,12 @@ import { Navigate, Route, Routes } from "react-router";
 import { DashboardLayout } from "@/components/common/dashboard-layout";
 import { ProtectedRoute } from "@/components/features/auth/protected-route";
 import { useAuth } from "@/contexts/auth-context";
+import AdminCustomersPage from "@/pages/admin/customers";
+import AdminDashboardPage from "@/pages/admin/dashboard";
+import AdminTechniciansPage from "@/pages/admin/technicians";
 import LoginPage from "@/pages/auth/login";
 import UnauthorizedPage from "@/pages/auth/unauthorized";
+import DispatcherTechniciansPage from "@/pages/dispatcher/technicians";
 
 function RoleDestinationPage() {
   const { user } = useAuth();
@@ -20,8 +24,7 @@ function RoleDestinationPage() {
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
           Navigation, responsive sidebar behavior, account controls, and logout
-          are now shared across protected pages. Dashboard data will be added in
-          the next step.
+          are now shared across protected pages.
         </p>
       </section>
     </DashboardLayout>
@@ -39,7 +42,25 @@ export function AppRoutes() {
         path="/admin/dashboard"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
-            <RoleDestinationPage />
+            <AdminDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/customers"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminCustomersPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/technicians"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminTechniciansPage />
           </ProtectedRoute>
         }
       />
@@ -49,6 +70,15 @@ export function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
             <RoleDestinationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dispatcher/technicians"
+        element={
+          <ProtectedRoute allowedRoles={["dispatcher"]}>
+            <DispatcherTechniciansPage />
           </ProtectedRoute>
         }
       />
