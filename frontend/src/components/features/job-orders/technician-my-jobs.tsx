@@ -54,7 +54,11 @@ export function TechnicianMyJobs() {
   }, []);
 
   useEffect(() => {
-    void loadJobs();
+    const timeoutId = window.setTimeout(() => {
+      void loadJobs();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadJobs]);
 
   return (

@@ -67,9 +67,13 @@ export function CustomerForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setValues(customerToFormValues(customer));
-    setFieldErrors({});
-    setSubmitError("");
+    const timeoutId = window.setTimeout(() => {
+      setValues(customerToFormValues(customer));
+      setFieldErrors({});
+      setSubmitError("");
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [customer]);
 
   function updateValue(field: keyof CustomerFormValues, value: string) {
@@ -79,7 +83,8 @@ export function CustomerForm({
     }));
 
     setFieldErrors((currentErrors) => {
-      const { [field]: ignoredError, ...remainingErrors } = currentErrors;
+      const remainingErrors = { ...currentErrors };
+      delete remainingErrors[field];
 
       return remainingErrors;
     });

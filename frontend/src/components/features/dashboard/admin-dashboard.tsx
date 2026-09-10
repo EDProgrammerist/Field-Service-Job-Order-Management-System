@@ -35,6 +35,7 @@ interface DashboardMetric {
 }
 
 const statusClassNames: Record<JobOrderStatus, string> = {
+  pending_review: "border-amber-200 bg-amber-50 text-amber-700",
   created: "border-slate-300 bg-slate-100 text-slate-700",
   assigned: "border-blue-200 bg-blue-50 text-blue-700",
   in_progress: "border-amber-200 bg-amber-50 text-amber-700",
@@ -125,7 +126,11 @@ export function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    void loadDashboard();
+    const timeoutId = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadDashboard]);
 
   if (isLoading) {

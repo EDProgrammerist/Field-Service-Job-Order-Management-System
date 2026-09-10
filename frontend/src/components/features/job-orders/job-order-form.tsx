@@ -133,7 +133,11 @@ export function JobOrderForm({
   }, [jobOrderId]);
 
   useEffect(() => {
-    void loadFormData();
+    const timeoutId = window.setTimeout(() => {
+      void loadFormData();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadFormData]);
 
   function updateValue(field: keyof JobOrderFormValues, value: string) {

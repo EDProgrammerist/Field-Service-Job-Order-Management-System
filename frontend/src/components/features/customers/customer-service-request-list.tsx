@@ -74,7 +74,11 @@ export function CustomerServiceRequestList() {
   }, []);
 
   useEffect(() => {
-    void loadRequests(page);
+    const timeoutId = window.setTimeout(() => {
+      void loadRequests(page);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadRequests, page]);
 
   return (

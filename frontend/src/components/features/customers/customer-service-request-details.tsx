@@ -63,7 +63,11 @@ export function CustomerServiceRequestDetails({
   }, [jobOrderId]);
 
   useEffect(() => {
-    void loadRequest();
+    const timeoutId = window.setTimeout(() => {
+      void loadRequest();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadRequest]);
 
   if (isLoading) {

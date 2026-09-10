@@ -100,9 +100,13 @@ export function TechnicianForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setValues(technicianToFormValues(technician));
-    setFieldErrors({});
-    setSubmitError("");
+    const timeoutId = window.setTimeout(() => {
+      setValues(technicianToFormValues(technician));
+      setFieldErrors({});
+      setSubmitError("");
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [technician]);
 
   function updateValue(field: keyof TechnicianFormValues, value: string) {
@@ -112,7 +116,8 @@ export function TechnicianForm({
     }));
 
     setFieldErrors((currentErrors) => {
-      const { [field]: ignoredError, ...remainingErrors } = currentErrors;
+      const remainingErrors = { ...currentErrors };
+      delete remainingErrors[field];
 
       return remainingErrors;
     });

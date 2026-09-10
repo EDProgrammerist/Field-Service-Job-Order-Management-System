@@ -9,6 +9,7 @@ const dashboardPathByRole: Record<UserRole, string> = {
   admin: "/admin/dashboard",
   dispatcher: "/dispatcher/dashboard",
   technician: "/technician/dashboard",
+  customer: "/customer/dashboard",
 };
 
 export default function NotFoundPage() {

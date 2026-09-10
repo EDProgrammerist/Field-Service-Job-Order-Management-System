@@ -95,7 +95,11 @@ export function TechnicianManagement() {
   );
 
   useEffect(() => {
-    void loadTechnicians(page, activeFilter);
+    const timeoutId = window.setTimeout(() => {
+      void loadTechnicians(page, activeFilter);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [activeFilter, loadTechnicians, page]);
 
   async function loadTechnicianUsers() {

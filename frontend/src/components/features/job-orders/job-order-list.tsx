@@ -104,7 +104,11 @@ export function JobOrderList() {
   );
 
   useEffect(() => {
-    void loadJobOrders(page, statusFilter, priorityFilter);
+    const timeoutId = window.setTimeout(() => {
+      void loadJobOrders(page, statusFilter, priorityFilter);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadJobOrders, page, priorityFilter, statusFilter]);
 
   function changeStatusFilter(value: string | null) {

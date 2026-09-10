@@ -79,7 +79,11 @@ export function JobOrderDetails({
   }, [jobOrderId]);
 
   useEffect(() => {
-    void loadDetails();
+    const timeoutId = window.setTimeout(() => {
+      void loadDetails();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadDetails]);
 
   if (isLoading) {

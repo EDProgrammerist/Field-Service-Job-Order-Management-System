@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Pencil, Plus, RefreshCw, UsersRound, X } from "lucide-react";
+import { Pencil, Plus, RefreshCw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -317,7 +317,11 @@ export function UserManagement() {
   }, []);
 
   useEffect(() => {
-    void loadUsers(page);
+    const timeoutId = window.setTimeout(() => {
+      void loadUsers(page);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadUsers, page]);
 
   function handleUserSaved(message: string) {

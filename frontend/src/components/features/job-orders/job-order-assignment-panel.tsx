@@ -87,7 +87,11 @@ export function JobOrderAssignmentPanel({
   }, [jobOrder.id]);
 
   useEffect(() => {
-    void loadAssignmentData();
+    const timeoutId = window.setTimeout(() => {
+      void loadAssignmentData();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadAssignmentData]);
 
   const activeAssignment =

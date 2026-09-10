@@ -84,7 +84,11 @@ export function CustomerManagement() {
   );
 
   useEffect(() => {
-    void loadCustomers(page, appliedSearch);
+    const timeoutId = window.setTimeout(() => {
+      void loadCustomers(page, appliedSearch);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [appliedSearch, loadCustomers, page]);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
