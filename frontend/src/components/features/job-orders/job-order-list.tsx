@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Plus, RefreshCw, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router";
 
 import { JobOrderTable } from "@/components/features/job-orders/job-order-table";
 import { Button } from "@/components/ui/button";
@@ -34,8 +34,22 @@ const PAGE_SIZE = 10;
 type PriorityFilter = "all" | JobOrderPriority;
 type StatusFilter = "all" | JobOrderStatus;
 
+function getSuccessMessage(state: unknown) {
+  if (
+    typeof state !== "object" ||
+    state === null ||
+    !("successMessage" in state) ||
+    typeof state.successMessage !== "string"
+  ) {
+    return "";
+  }
+
+  return state.successMessage;
+}
+
 export function JobOrderList() {
   const { user } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const [jobOrders, setJobOrders] = useState<JobOrder[]>([]);
@@ -47,6 +61,9 @@ export function JobOrderList() {
     useState<PriorityFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(() =>
+    getSuccessMessage(location.state),
+  );
 
   const createPath =
     user?.role === "admin"
@@ -139,6 +156,27 @@ export function JobOrderList() {
           Create job order
         </Button>
       </div>
+
+      {successMessage ? (
+        <div
+          className="flex items-start justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400"
+          role="status"
+        >
+          <span>{successMessage}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Dismiss message"
+            onClick={() => {
+              setSuccessMessage("");
+              navigate(location.pathname, { replace: true, state: null });
+            }}
+          >
+            <X />
+          </Button>
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader className="flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

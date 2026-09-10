@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Pencil, RefreshCw } from "lucide-react";
+import { ArrowLeft, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router";
 
+import { DeleteJobOrderDialog } from "@/components/features/job-orders/delete-job-order-dialog";
 import { JobOrderStatusPanel } from "@/components/features/job-orders/job-order-status-panel";
 import { JobOrderAssignmentPanel } from "@/components/features/job-orders/job-order-assignment-panel";
 import {
@@ -50,6 +51,7 @@ export function JobOrderDetails({
     [],
   );
   const [error, setError] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadDetails = useCallback(async () => {
@@ -147,6 +149,14 @@ export function JobOrderDetails({
           >
             <Pencil />
             Edit job order
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <Trash2 />
+            Delete job order
           </Button>
           <JobOrderStatusBadge status={jobOrder.status} />
           <JobOrderPriorityBadge priority={jobOrder.priority} />
@@ -265,6 +275,20 @@ export function JobOrderDetails({
           </CardContent>
         </Card>
       </div>
+
+      <DeleteJobOrderDialog
+        jobOrder={jobOrder}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onDeleted={(message) =>
+          navigate(listPath, {
+            replace: true,
+            state: {
+              successMessage: message,
+            },
+          })
+        }
+      />
     </section>
   );
 }

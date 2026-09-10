@@ -140,6 +140,18 @@ class JobOrderController extends Controller
     }
 
     /**
+     * Remove the specified job order and its dependent workflow records.
+     */
+    public function destroy(JobOrder $jobOrder): JsonResponse
+    {
+        $jobOrder->delete();
+
+        return response()->json([
+            'message' => 'Job order deleted successfully.',
+        ]);
+    }
+
+    /**
      * Update a job order status through the controlled workflow.
      */
     public function updateStatus(

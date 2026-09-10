@@ -176,7 +176,7 @@ export function TechnicianDashboard() {
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-start sm:justify-between">
+          <CardContent className="flex flex-col items-start gap-4 pt-6 sm:flex-row sm:justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
                 Technician profile

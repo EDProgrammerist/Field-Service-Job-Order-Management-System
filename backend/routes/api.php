@@ -36,7 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
             ->only(['index', 'show']);
 
         Route::apiResource('job-orders', JobOrderController::class)
-            ->only(['index', 'store', 'show', 'update']);
+            ->only(['index', 'store', 'show', 'update', 'destroy']);
 
         Route::get(
             '/job-orders/{jobOrder}/assignments',

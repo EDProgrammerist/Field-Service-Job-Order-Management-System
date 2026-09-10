@@ -103,6 +103,10 @@ export interface JobOrderResponse {
   data: JobOrder;
 }
 
+export interface DeleteJobOrderResponse {
+  message: string;
+}
+
 export interface UpdateJobOrderStatusResponse {
   message: string;
   data: {

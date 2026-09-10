@@ -2,14 +2,12 @@ import { useState } from "react";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useNavigate } from "react-router";
 
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -86,12 +84,14 @@ export function UserMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>
-          <p className="truncate font-medium">{user.name}</p>
-          <p className="mt-1 truncate text-xs font-normal text-muted-foreground">
-            {user.email}
-          </p>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>
+            <p className="truncate font-medium">{user.name}</p>
+            <p className="mt-1 truncate text-xs font-normal text-muted-foreground">
+              {user.email}
+            </p>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 

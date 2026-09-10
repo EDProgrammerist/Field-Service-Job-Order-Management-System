@@ -1,6 +1,7 @@
 import api from "@/lib/axios";
 import type {
   CreateJobOrderPayload,
+  DeleteJobOrderResponse,
   JobOrder,
   JobOrderPriority,
   JobOrderResponse,
@@ -87,6 +88,16 @@ export async function updateJobOrder(
   const response = await api.put<JobOrderResponse>(
     `/job-orders/${jobOrderId}`,
     payload,
+  );
+
+  return response.data;
+}
+
+export async function deleteJobOrder(
+  jobOrderId: number,
+): Promise<DeleteJobOrderResponse> {
+  const response = await api.delete<DeleteJobOrderResponse>(
+    `/job-orders/${jobOrderId}`,
   );
 
   return response.data;
