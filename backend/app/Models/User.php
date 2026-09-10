@@ -46,6 +46,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the customer profile associated with this user.
+     */
+    public function customer(): HasOne
+    {
+        return $this->hasOne(Customer::class);
+    }
+
+    /**
      * Get the job orders created by this user.
      */
     public function createdJobOrders(): HasMany

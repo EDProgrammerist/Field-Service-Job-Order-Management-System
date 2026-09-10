@@ -15,6 +15,7 @@ class JobOrderStatusService
      * Define valid status transitions.
      */
     private const ALLOWED_TRANSITIONS = [
+        'pending_review' => ['created', 'cancelled'],
         'created' => ['assigned', 'cancelled'],
         'assigned' => ['created', 'in_progress', 'cancelled'],
         'in_progress' => ['assigned', 'completed', 'cancelled'],

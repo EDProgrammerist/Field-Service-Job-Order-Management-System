@@ -20,6 +20,7 @@ class JobOrder extends Model
     ];
 
     public const STATUSES = [
+        'pending_review',
         'created',
         'assigned',
         'in_progress',
