@@ -1,6 +1,7 @@
 import api from "@/lib/axios";
 import type {
   AuthenticatedUser,
+  CustomerRegistrationPayload,
   CurrentUserResponse,
   LoginPayload,
   LoginResponse,
@@ -21,6 +22,14 @@ export async function getCurrentUser(): Promise<AuthenticatedUser> {
 
 export async function logout(): Promise<LogoutResponse> {
   const response = await api.post<LogoutResponse>("/logout");
+
+  return response.data;
+}
+
+export async function registerCustomer(
+  payload: CustomerRegistrationPayload,
+): Promise<LoginResponse> {
+  const response = await api.post<LoginResponse>("/customer/register", payload);
 
   return response.data;
 }

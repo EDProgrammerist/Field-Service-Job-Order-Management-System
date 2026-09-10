@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "dispatcher" | "technician";
+export type UserRole = "admin" | "dispatcher" | "technician" | "customer";
 
 export interface AuthenticatedUser {
   id: number;
@@ -32,4 +32,14 @@ export interface CurrentUserResponse {
 
 export interface LogoutResponse {
   message: string;
+}
+
+export interface CustomerRegistrationPayload {
+  name: string;
+  email: string;
+  phone: string;
+  address: string | null;
+  password: string;
+  password_confirmation: string;
+  device_name?: string;
 }

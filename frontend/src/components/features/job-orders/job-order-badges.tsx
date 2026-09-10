@@ -13,6 +13,7 @@ interface JobOrderPriorityBadgeProps {
 }
 
 const statusLabels: Record<JobOrderStatus, string> = {
+  pending_review: "Pending review",
   created: "Created",
   assigned: "Assigned",
   in_progress: "In progress",
@@ -29,6 +30,10 @@ const priorityLabels: Record<JobOrderPriority, string> = {
 };
 
 function statusVariant(status: JobOrderStatus) {
+  if (status === "pending_review") {
+    return "outline";
+  }
+
   if (status === "completed" || status === "closed") {
     return "secondary";
   }

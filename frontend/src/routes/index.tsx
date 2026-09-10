@@ -10,6 +10,9 @@ import AdminJobOrdersPage from "@/pages/admin/job-orders";
 import AdminTechniciansPage from "@/pages/admin/technicians";
 import AdminUsersPage from "@/pages/admin/users";
 import LoginPage from "@/pages/auth/login";
+import CustomerDashboardPage from "@/pages/customer/dashboard";
+import CustomerRegisterPage from "@/pages/customer/register";
+import CustomerNewServiceRequestPage from "@/pages/customer/service-requests/new";
 import UnauthorizedPage from "@/pages/auth/unauthorized";
 import DispatcherDashboardPage from "@/pages/dispatcher/dashboard";
 import DispatcherCreateJobOrderPage from "@/pages/dispatcher/job-orders/create";
@@ -21,13 +24,51 @@ import NotFoundPage from "@/pages/not-found";
 import TechnicianDashboardPage from "@/pages/technician/dashboard";
 import TechnicianJobOrderDetailsPage from "@/pages/technician/my-jobs/details";
 import TechnicianMyJobsPage from "@/pages/technician/my-jobs";
+import CustomerServiceRequestsPage from "@/pages/customer/service-requests";
+import CustomerServiceRequestDetailsPage from "@/pages/customer/service-requests/details";
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/customer/register" element={<CustomerRegisterPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+      <Route
+        path="/customer/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <CustomerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customer/service-requests/new"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <CustomerNewServiceRequestPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/customer/service-requests"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <CustomerServiceRequestsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/customer/service-requests/:jobOrderId"
+        element={
+          <ProtectedRoute allowedRoles={["customer"]}>
+            <CustomerServiceRequestDetailsPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/admin/dashboard"

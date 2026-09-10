@@ -109,12 +109,13 @@ export function JobOrderList() {
 
   function changeStatusFilter(value: string | null) {
     const status: StatusFilter =
-      value === "created" ||
-      value === "assigned" ||
-      value === "in_progress" ||
-      value === "completed" ||
-      value === "closed" ||
-      value === "cancelled"
+      value === "pending_review" ||
+        value === "created" ||
+        value === "assigned" ||
+        value === "in_progress" ||
+        value === "completed" ||
+        value === "closed" ||
+        value === "cancelled"
         ? value
         : "all";
 
@@ -125,9 +126,9 @@ export function JobOrderList() {
   function changePriorityFilter(value: string | null) {
     const priority: PriorityFilter =
       value === "low" ||
-      value === "normal" ||
-      value === "high" ||
-      value === "urgent"
+        value === "normal" ||
+        value === "high" ||
+        value === "urgent"
         ? value
         : "all";
 
@@ -189,6 +190,7 @@ export function JobOrderList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="pending_review">Pending review</SelectItem>
                 <SelectItem value="created">Created</SelectItem>
                 <SelectItem value="assigned">Assigned</SelectItem>
                 <SelectItem value="in_progress">In progress</SelectItem>

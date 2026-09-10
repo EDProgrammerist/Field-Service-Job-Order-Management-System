@@ -90,6 +90,24 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
       icon: ClipboardList,
     },
   ],
+  customer: [
+    {
+      label: "Dashboard",
+      href: "/customer/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      label: "New Request",
+      href: "/customer/service-requests/new",
+      icon: ClipboardList,
+    },
+
+    {
+      label: "My Requests",
+      href: "/customer/service-requests",
+      icon: ClipboardList,
+    },
+  ],
 };
 
 function getInitials(name: string) {

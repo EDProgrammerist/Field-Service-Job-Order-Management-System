@@ -3,6 +3,7 @@ import type { UserRole } from "@/types/auth";
 export type JobOrderPriority = "low" | "normal" | "high" | "urgent";
 
 export type JobOrderStatus =
+  | "pending_review"
   | "created"
   | "assigned"
   | "in_progress"
@@ -93,6 +94,12 @@ export interface CreateJobOrderPayload {
 
 export type UpdateJobOrderPayload = CreateJobOrderPayload;
 
+export interface CustomerServiceRequestPayload {
+  title: string;
+  description: string;
+  service_address: string;
+}
+
 export interface UpdateJobOrderStatusPayload {
   status: JobOrderStatus;
   remarks: string | null;
@@ -113,4 +120,13 @@ export interface UpdateJobOrderStatusResponse {
     job_order: JobOrder;
     status_history: JobOrderStatusHistory;
   };
+}
+
+export interface CustomerServiceRequestDetails extends JobOrder {
+  status_histories: JobOrderStatusHistory[];
+}
+
+export interface CustomerServiceRequestDetailsResponse {
+  message: string;
+  data: CustomerServiceRequestDetails;
 }

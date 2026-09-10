@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import axios from "axios";
-import { Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate } from "react-router";
 import { ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ const dashboardPathByRole: Record<UserRole, string> = {
   admin: "/admin/dashboard",
   dispatcher: "/dispatcher/dashboard",
   technician: "/technician/dashboard",
+  customer: "/customer/dashboard",
 };
 
 function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
@@ -243,6 +244,16 @@ export function LoginForm() {
               >
                 {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Need a customer account?{" "}
+                <Link
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                  to="/customer/register"
+                >
+                  Register here
+                </Link>
+              </p>
             </form>
           </CardContent>
         </Card>

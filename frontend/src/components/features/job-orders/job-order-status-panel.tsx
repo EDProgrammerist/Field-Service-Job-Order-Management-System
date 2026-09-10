@@ -16,6 +16,7 @@ interface JobOrderStatusPanelProps {
 }
 
 const allowedTransitions: Record<JobOrderStatus, JobOrderStatus[]> = {
+  pending_review: ["created", "cancelled"],
   created: ["assigned", "cancelled"],
   assigned: ["created", "in_progress", "cancelled"],
   in_progress: ["assigned", "completed", "cancelled"],
@@ -25,6 +26,7 @@ const allowedTransitions: Record<JobOrderStatus, JobOrderStatus[]> = {
 };
 
 const statusLabels: Record<JobOrderStatus, string> = {
+  pending_review: "Pending review",
   created: "Created",
   assigned: "Assigned",
   in_progress: "In Progress",

@@ -14,9 +14,11 @@ import {
   getCurrentUser,
   login as loginRequest,
   logout as logoutRequest,
+  registerCustomer as registerCustomerRequest,
 } from "@/services/auth";
 import type {
   AuthenticatedUser,
+  CustomerRegistrationPayload,
   LoginPayload,
 } from "@/types/auth";
 
@@ -25,6 +27,9 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<AuthenticatedUser>;
+  registerCustomer: (
+    payload: CustomerRegistrationPayload,
+  ) => Promise<AuthenticatedUser>;
   logout: () => Promise<void>;
 }
 
@@ -54,6 +59,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setUser(null);
     }
   }, []);
+
+  const registerCustomer = useCallback(
+    async (
+      payload: CustomerRegistrationPayload,
+    ): Promise<AuthenticatedUser> => {
+      const response = await registerCustomerRequest(payload);
+
+      localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, response.data.token);
+      setUser(response.data.user);
+
+      return response.data.user;
+    },
+    [],
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -106,9 +125,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isAuthenticated: user !== null,
       isLoading,
       login,
+      registerCustomer,
       logout,
     }),
-    [isLoading, login, logout, user],
+    [isLoading, login, logout, registerCustomer, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
