@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router";
+import { Route, Routes } from "react-router";
 
 import { ProtectedRoute } from "@/components/features/auth/protected-route";
 import AdminCustomersPage from "@/pages/admin/customers";
@@ -26,11 +26,12 @@ import TechnicianJobOrderDetailsPage from "@/pages/technician/my-jobs/details";
 import TechnicianMyJobsPage from "@/pages/technician/my-jobs";
 import CustomerServiceRequestsPage from "@/pages/customer/service-requests";
 import CustomerServiceRequestDetailsPage from "@/pages/customer/service-requests/details";
+import HomePage from "@/pages/home";
 
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/customer/register" element={<CustomerRegisterPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -51,7 +52,6 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/customer/service-requests"
         element={
@@ -60,7 +60,6 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/customer/service-requests/:jobOrderId"
         element={
