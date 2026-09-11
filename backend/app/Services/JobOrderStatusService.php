@@ -6,6 +6,7 @@ use App\Models\JobOrder;
 use App\Models\JobOrderAssignment;
 use App\Models\JobOrderStatusHistory;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,7 +26,7 @@ class JobOrderStatusService
     ];
 
     /**
-     * Change the status of a job order and record the history.
+     * Change a job order status and record its history.
      */
     public function transition(
         JobOrder $jobOrder,
@@ -45,9 +46,24 @@ class JobOrderStatusService
 
             $currentStatus = $lockedJobOrder->status;
 
+            $activeAssignment = JobOrderAssignment::query()
+                ->where('job_order_id', $lockedJobOrder->id)
+                ->whereNull('unassigned_at')
+                ->lockForUpdate()
+                ->first();
+
+            $this->ensureUserCanChangeStatus(
+                $currentStatus,
+                $newStatus,
+                $changedBy,
+                $activeAssignment
+            );
+
             if ($currentStatus === $newStatus) {
                 throw ValidationException::withMessages([
-                    'status' => ['The job order already has this status.'],
+                    'status' => [
+                        'The job order already has this status.',
+                    ],
                 ]);
             }
 
@@ -62,20 +78,6 @@ class JobOrderStatusService
                     ],
                 ]);
             }
-
-            $activeAssignment = JobOrderAssignment::query()
-                ->where('job_order_id', $lockedJobOrder->id)
-                ->whereNull('unassigned_at')
-                ->lockForUpdate()
-                ->first();
-
-            $this->ensureUserCanChangeStatus(
-                $lockedJobOrder,
-                $currentStatus,
-                $newStatus,
-                $changedBy,
-                $activeAssignment
-            );
 
             if ($newStatus === 'assigned' && ! $activeAssignment) {
                 throw ValidationException::withMessages([
@@ -115,6 +117,15 @@ class JobOrderStatusService
 
             $lockedJobOrder->update($updates);
 
+            if (
+                $activeAssignment
+                && in_array($newStatus, ['completed', 'closed'], true)
+            ) {
+                $activeAssignment->update([
+                    'unassigned_at' => now(),
+                ]);
+            }
+
             return JobOrderStatusHistory::create([
                 'job_order_id' => $lockedJobOrder->id,
                 'status' => $newStatus,
@@ -125,23 +136,26 @@ class JobOrderStatusService
     }
 
     /**
-     * Ensure the authenticated user may perform this status change.
+     * Ensure the authenticated user may perform the status change.
      */
     private function ensureUserCanChangeStatus(
-        JobOrder $jobOrder,
         string $currentStatus,
         string $newStatus,
         User $changedBy,
         ?JobOrderAssignment $activeAssignment
     ): void {
-        if (in_array($changedBy->role, ['admin', 'dispatcher'], true)) {
+        if (in_array(
+            $changedBy->role,
+            ['admin', 'dispatcher'],
+            true
+        )) {
             return;
         }
 
         if ($changedBy->role !== 'technician') {
-            throw ValidationException::withMessages([
-                'status' => ['You are not allowed to change this job order status.'],
-            ]);
+            throw new AuthorizationException(
+                'You are not allowed to change job order statuses.'
+            );
         }
 
         $technician = $changedBy->technician;
@@ -149,6 +163,12 @@ class JobOrderStatusService
         $isAssignedToTechnician = $technician
             && $activeAssignment
             && $activeAssignment->technician_id === $technician->id;
+
+        if (! $isAssignedToTechnician) {
+            throw new AuthorizationException(
+                'You may only update a job order currently assigned to you.'
+            );
+        }
 
         $technicianTransitionIsAllowed = (
             $currentStatus === 'assigned'
@@ -158,7 +178,7 @@ class JobOrderStatusService
             && $newStatus === 'completed'
         );
 
-        if (! $isAssignedToTechnician || ! $technicianTransitionIsAllowed) {
+        if (! $technicianTransitionIsAllowed) {
             throw ValidationException::withMessages([
                 'status' => [
                     'Technicians may only start or complete their own active job orders.',

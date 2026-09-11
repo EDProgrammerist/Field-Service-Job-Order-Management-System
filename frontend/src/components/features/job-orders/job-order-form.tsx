@@ -79,7 +79,9 @@ function toPayload(values: JobOrderFormValues): CreateJobOrderPayload {
     description: values.description.trim() || null,
     service_address: values.serviceAddress.trim() || null,
     priority: values.priority,
-    scheduled_at: values.scheduledAt || null,
+    scheduled_at: values.scheduledAt
+      ? new Date(values.scheduledAt).toISOString()
+      : null,
   };
 }
 
@@ -305,11 +307,10 @@ export function JobOrderForm({
                     onClick={() =>
                       updateValue("customerId", String(customer.id))
                     }
-                    className={`rounded-lg border p-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                      isSelected
+                    className={`rounded-lg border p-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isSelected
                         ? "border-primary bg-primary/10"
                         : "border-border hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     <span className="block font-medium">{customer.name}</span>
                     <span className="mt-1 block text-xs text-muted-foreground">

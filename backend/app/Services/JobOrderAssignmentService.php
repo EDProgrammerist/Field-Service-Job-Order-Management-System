@@ -30,7 +30,11 @@ class JobOrderAssignmentService
                 ->lockForUpdate()
                 ->findOrFail($jobOrder->id);
 
-            if (! in_array($lockedJobOrder->status, ['created', 'assigned'], true)) {
+            if (! in_array(
+                $lockedJobOrder->status,
+                ['created', 'assigned'],
+                true
+            )) {
                 throw ValidationException::withMessages([
                     'job_order' => [
                         'Only job orders with created or assigned status can be assigned.',
@@ -103,7 +107,10 @@ class JobOrderAssignmentService
         JobOrderAssignment $assignment,
         int $changedBy
     ): JobOrderAssignment {
-        return DB::transaction(function () use ($assignment, $changedBy) {
+        return DB::transaction(function () use (
+            $assignment,
+            $changedBy
+        ) {
             $lockedAssignment = JobOrderAssignment::query()
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
@@ -120,6 +127,14 @@ class JobOrderAssignmentService
                 ->lockForUpdate()
                 ->findOrFail($lockedAssignment->job_order_id);
 
+            if ($jobOrder->status !== 'assigned') {
+                throw ValidationException::withMessages([
+                    'assignment' => [
+                        'Only an assigned job order can have its assignment ended. Move an in-progress job back to assigned status first.',
+                    ],
+                ]);
+            }
+
             $lockedAssignment->update([
                 'unassigned_at' => now(),
             ]);
@@ -129,7 +144,7 @@ class JobOrderAssignmentService
                 ->whereNull('unassigned_at')
                 ->exists();
 
-            if (! $hasActiveAssignment && $jobOrder->status === 'assigned') {
+            if (! $hasActiveAssignment) {
                 $jobOrder->update([
                     'status' => 'created',
                 ]);

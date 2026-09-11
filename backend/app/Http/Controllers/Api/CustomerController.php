@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Models\Customer;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
@@ -17,14 +17,33 @@ class CustomerController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
-        $search = $request->input('search');
+        $filters = $request->validate([
+            'per_page' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+            'search' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+        ]);
+
+        $perPage = (int) ($filters['per_page'] ?? 15);
+        $search = $filters['search'] ?? null;
 
         $customers = Customer::query()
             ->when($search, function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('contact_person', 'like', "%{$search}%")
+                        ->orWhere(
+                            'contact_person',
+                            'like',
+                            "%{$search}%"
+                        )
                         ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%");
                 });
@@ -42,8 +61,9 @@ class CustomerController extends Controller
     /**
      * Store a newly created customer.
      */
-    public function store(StoreCustomerRequest $request): JsonResponse
-    {
+    public function store(
+        StoreCustomerRequest $request
+    ): JsonResponse {
         $customer = Customer::create($request->validated());
 
         return response()->json([
@@ -66,9 +86,37 @@ class CustomerController extends Controller
     /**
      * Update the specified customer.
      */
-    public function update(UpdateCustomerRequest $request, Customer $customer): JsonResponse
-    {
-        $customer->update($request->validated());
+    public function update(
+        UpdateCustomerRequest $request,
+        Customer $customer
+    ): JsonResponse {
+        $data = $request->validated();
+
+        DB::transaction(function () use ($customer, $data) {
+            $customer->update($data);
+
+            if ($customer->user_id === null) {
+                return;
+            }
+
+            $user = $customer->user;
+
+            if ($user === null) {
+                return;
+            }
+
+            if (array_key_exists('name', $data)) {
+                $user->name = $data['name'];
+            }
+
+            if (array_key_exists('email', $data)) {
+                $user->email = $data['email'];
+            }
+
+            if ($user->isDirty()) {
+                $user->save();
+            }
+        });
 
         return response()->json([
             'message' => 'Customer updated successfully.',
@@ -77,17 +125,23 @@ class CustomerController extends Controller
     }
 
     /**
-     * Remove the specified customer.
+     * Delete the specified customer.
      */
     public function destroy(Customer $customer): JsonResponse
     {
-        try {
-            $customer->delete();
-        } catch (QueryException) {
+        if ($customer->user_id !== null) {
+            return response()->json([
+                'message' => 'Customer cannot be deleted while it is linked to a customer login account.',
+            ], 409);
+        }
+
+        if ($customer->jobOrders()->exists()) {
             return response()->json([
                 'message' => 'Customer cannot be deleted because it has related job orders.',
             ], 409);
         }
+
+        $customer->delete();
 
         return response()->json([
             'message' => 'Customer deleted successfully.',

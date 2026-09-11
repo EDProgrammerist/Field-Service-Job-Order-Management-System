@@ -253,15 +253,24 @@ export function JobOrderAssignmentPanel({
                 Assigned {formatDate(activeAssignment.assigned_at)}
               </p>
 
-              <Button
-                className="mt-4"
-                type="button"
-                variant="outline"
-                disabled={isSubmitting}
-                onClick={() => setIsUnassignDialogOpen(true)}
-              >
-                End assignment
-              </Button>
+              {jobOrder.status === "assigned" ? (
+                <Button
+                  className="mt-4"
+                  type="button"
+                  variant="outline"
+                  disabled={isSubmitting}
+                  onClick={() => setIsUnassignDialogOpen(true)}
+                >
+                  End assignment
+                </Button>
+              ) : null}
+
+              {jobOrder.status === "in_progress" ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Move the job back to Assigned status before ending or replacing
+                  its technician assignment.
+                </p>
+              ) : null}
             </div>
           ) : (
             <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">

@@ -15,6 +15,19 @@ class ForceJsonResponse
     {
         $request->headers->set('Accept', 'application/json');
 
+        if (
+            $request->isJson()
+            && trim($request->getContent()) !== ''
+        ) {
+            json_decode($request->getContent(), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return response()->json([
+                    'message' => 'The request body contains invalid JSON.',
+                ], 400);
+            }
+        }
+
         return $next($request);
     }
 }

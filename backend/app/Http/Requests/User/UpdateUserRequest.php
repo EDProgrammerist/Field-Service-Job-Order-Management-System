@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\User;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the user is authorized.
      */
     public function authorize(): bool
     {
@@ -16,24 +17,54 @@ class UpdateUserRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules for the request.
      *
      * @return array<string, mixed>
      */
     public function rules(): array
     {
+        $user = $this->route('user');
+
+        $allowedRoles = [
+            'admin',
+            'dispatcher',
+            'technician',
+        ];
+
+        if (
+            $user instanceof User
+            && $user->role === 'customer'
+        ) {
+            $allowedRoles[] = 'customer';
+        }
+
         return [
-            'name'  => ['sometimes', 'required', 'string', 'max:255'],
+            'name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+            ],
             'email' => [
                 'sometimes',
                 'required',
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($this->route('user')),
-        ],
-        'role' => ['sometimes', 'required', Rule::in(['admin', 'dispatcher', 'technician'])],
-        'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+                Rule::unique('users', 'email')->ignore($user),
+            ],
+            'role' => [
+                'sometimes',
+                'required',
+                Rule::in($allowedRoles),
+            ],
+            'password' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
         ];
     }
 }

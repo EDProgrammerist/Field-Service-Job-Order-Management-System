@@ -12,9 +12,20 @@ class JobOrderStatusHistoryController extends Controller
     /**
      * Display paginated status history for a job order.
      */
-    public function index(Request $request, JobOrder $jobOrder): JsonResponse
-    {
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
+    public function index(
+        Request $request,
+        JobOrder $jobOrder
+    ): JsonResponse {
+        $pagination = $request->validate([
+            'per_page' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+        $perPage = (int) ($pagination['per_page'] ?? 15);
 
         $history = $jobOrder->statusHistories()
             ->with('changedBy:id,name,email,role')

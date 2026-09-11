@@ -2,13 +2,14 @@
 
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\ForceJsonResponse;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -30,7 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request, Throwable $exception) => $request->is('api/*')
+            fn (Request $request, Throwable $exception) =>
+                $request->is('api/*')
         );
 
         $exceptions->render(function (
@@ -61,7 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (
-            AuthorizationException $exception,
+            AccessDeniedHttpException $exception,
             Request $request
         ) {
             if (! $request->is('api/*')) {
@@ -103,7 +105,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Throwable $exception,
             Request $request
         ) {
-            if (! $request->is('api/*')) {
+            if (
+                ! $request->is('api/*')
+                || $exception instanceof HttpExceptionInterface
+            ) {
                 return null;
             }
 
@@ -111,4 +116,5 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => 'An unexpected server error occurred.',
             ], 500);
         });
-    })->create();
+    })
+    ->create();

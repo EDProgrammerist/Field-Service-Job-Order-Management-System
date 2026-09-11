@@ -133,19 +133,19 @@ function UserForm({ user, onCancel, onSuccess }: UserFormProps) {
 
       const response = isEditing && user
         ? await updateUser(user.id, {
-            ...basePayload,
-            ...(values.password
-              ? {
-                  password: values.password,
-                  password_confirmation: values.passwordConfirmation,
-                }
-              : {}),
-          } satisfies UpdateUserPayload)
+          ...basePayload,
+          ...(values.password
+            ? {
+              password: values.password,
+              password_confirmation: values.passwordConfirmation,
+            }
+            : {}),
+        } satisfies UpdateUserPayload)
         : await createUser({
-            ...basePayload,
-            password: values.password,
-            password_confirmation: values.passwordConfirmation,
-          } satisfies CreateUserPayload);
+          ...basePayload,
+          password: values.password,
+          password_confirmation: values.passwordConfirmation,
+        } satisfies CreateUserPayload);
 
       onSuccess(response.message);
     } catch (error) {
@@ -208,12 +208,16 @@ function UserForm({ user, onCancel, onSuccess }: UserFormProps) {
         <select
           id="user-role"
           value={values.role}
-          disabled={isSubmitting}
+          disabled={isSubmitting || user?.role === "customer"}
           onChange={(event) =>
             updateValue("role", event.target.value as UserRole)
           }
           className="flex h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
         >
+          {user?.role === "customer" ? (
+            <option value="customer">Customer</option>
+          ) : null}
+
           <option value="admin">Admin</option>
           <option value="dispatcher">Dispatcher</option>
           <option value="technician">Technician</option>
@@ -395,40 +399,40 @@ export function UserManagement() {
               <div className="space-y-3 p-4 md:hidden">
                 {isLoading
                   ? Array.from({ length: 5 }, (_, index) => (
-                      <div
-                        key={index}
-                        className="h-28 animate-pulse rounded-lg bg-muted"
-                      />
-                    ))
+                    <div
+                      key={index}
+                      className="h-28 animate-pulse rounded-lg bg-muted"
+                    />
+                  ))
                   : users.map((user) => (
-                      <article key={user.id} className="rounded-lg border p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold">
-                              {user.name}
-                            </p>
-                            <p className="mt-1 truncate text-sm text-muted-foreground">
-                              {user.email}
-                            </p>
-                          </div>
-
-                          <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
-                            {roleLabel(user.role)}
-                          </span>
+                    <article key={user.id} className="rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">
+                            {user.name}
+                          </p>
+                          <p className="mt-1 truncate text-sm text-muted-foreground">
+                            {user.email}
+                          </p>
                         </div>
 
-                        <Button
-                          className="mt-4"
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setUserToEdit(user)}
-                        >
-                          <Pencil />
-                          Edit
-                        </Button>
-                      </article>
-                    ))}
+                        <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
+                          {roleLabel(user.role)}
+                        </span>
+                      </div>
+
+                      <Button
+                        className="mt-4"
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setUserToEdit(user)}
+                      >
+                        <Pencil />
+                        Edit
+                      </Button>
+                    </article>
+                  ))}
               </div>
 
               <div className="hidden md:block">

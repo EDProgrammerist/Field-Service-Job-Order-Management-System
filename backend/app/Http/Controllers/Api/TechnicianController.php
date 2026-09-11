@@ -8,21 +8,43 @@ use App\Http\Requests\Technician\UpdateTechnicianRequest;
 use App\Models\Technician;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TechnicianController extends Controller
 {
     /**
      * Display a paginated list of technicians.
      */
-    public function index(Request $request): JsonResponse
+        public function index(Request $request): JsonResponse
     {
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
+        $filters = $request->validate([
+            'per_page' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+            'is_active' => [
+                'sometimes',
+                Rule::in(['true', 'false', '1', '0']),
+            ],
+        ]);
+
+        $perPage = (int) ($filters['per_page'] ?? 15);
+
+        $isActive = array_key_exists('is_active', $filters)
+            ? filter_var(
+                $filters['is_active'],
+                FILTER_VALIDATE_BOOLEAN
+            )
+            : null;
 
         $technicians = Technician::query()
             ->with('user:id,name,email,role')
             ->when(
-                $request->has('is_active'),
-                fn ($query) => $query->where('is_active', $request->boolean('is_active'))
+                $isActive !== null,
+                fn ($query) =>
+                    $query->where('is_active', $isActive)
             )
             ->orderBy('employee_number')
             ->paginate($perPage)

@@ -1,5 +1,6 @@
 export interface Customer {
   id: number;
+  user_id: number | null;
   name: string;
   contact_person: string | null;
   email: string | null;

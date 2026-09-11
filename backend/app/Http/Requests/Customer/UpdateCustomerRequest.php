@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Validation\Rule;
 
 class UpdateCustomerRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the user is authorized.
      */
     public function authorize(): bool
     {
@@ -16,18 +17,58 @@ class UpdateCustomerRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules for the request.
      *
-     * @return array<string, array<int, string>|string>
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
+        $customer = $this->route('customer');
+
+        $linkedUserId = $customer instanceof Customer
+            ? $customer->user_id
+            : null;
+
+        $emailRules = ['sometimes'];
+
+        if ($linkedUserId !== null) {
+            $emailRules[] = 'required';
+        } else {
+            $emailRules[] = 'nullable';
+        }
+
+        $emailRules[] = 'email';
+        $emailRules[] = 'max:255';
+
+        if ($linkedUserId !== null) {
+            $emailRules[] = Rule::unique('users', 'email')
+                ->ignore($linkedUserId);
+        }
+
         return [
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'contact_person' => ['nullable', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['sometimes', 'required', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:500'],
+            'name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+            ],
+            'contact_person' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'email' => $emailRules,
+            'phone' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:30',
+            ],
+            'address' => [
+                'nullable',
+                'string',
+                'max:500',
+            ],
         ];
     }
 }

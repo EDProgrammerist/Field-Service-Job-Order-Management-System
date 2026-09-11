@@ -13,6 +13,7 @@ use App\Services\JobOrderStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class JobOrderController extends Controller
 {
@@ -21,21 +22,52 @@ class JobOrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
+        $filters = $request->validate([
+            'per_page' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+            'status' => [
+                'sometimes',
+                Rule::in(JobOrder::STATUSES),
+            ],
+            'priority' => [
+                'sometimes',
+                Rule::in(JobOrder::PRIORITIES),
+            ],
+            'customer_id' => [
+                'sometimes',
+                'integer',
+                Rule::exists('customers', 'id'),
+            ],
+        ]);
+
+        $perPage = (int) ($filters['per_page'] ?? 15);
 
         $jobOrders = JobOrder::query()
             ->with($this->jobOrderRelations())
             ->when(
-                $request->filled('status'),
-                fn ($query) => $query->where('status', $request->input('status'))
+                array_key_exists('status', $filters),
+                fn ($query) => $query->where(
+                    'status',
+                    $filters['status']
+                )
             )
             ->when(
-                $request->filled('priority'),
-                fn ($query) => $query->where('priority', $request->input('priority'))
+                array_key_exists('priority', $filters),
+                fn ($query) => $query->where(
+                    'priority',
+                    $filters['priority']
+                )
             )
             ->when(
-                $request->filled('customer_id'),
-                fn ($query) => $query->where('customer_id', $request->integer('customer_id'))
+                array_key_exists('customer_id', $filters),
+                fn ($query) => $query->where(
+                    'customer_id',
+                    $filters['customer_id']
+                )
             )
             ->orderByDesc('created_at')
             ->paginate($perPage)
@@ -60,7 +92,16 @@ class JobOrderController extends Controller
             ], 404);
         }
 
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
+        $pagination = $request->validate([
+            'per_page' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+        $perPage = (int) ($pagination['per_page'] ?? 15);
 
         $jobOrders = JobOrder::query()
             ->whereHas('assignments', function ($query) use ($technician) {
@@ -85,7 +126,10 @@ class JobOrderController extends Controller
         StoreJobOrderRequest $request,
         JobOrderNumberGenerator $jobOrderNumberGenerator
     ): JsonResponse {
-        $jobOrder = DB::transaction(function () use ($request, $jobOrderNumberGenerator) {
+        $jobOrder = DB::transaction(function () use (
+            $request,
+            $jobOrderNumberGenerator
+        ) {
             $jobOrder = JobOrder::create([
                 ...$request->validated(),
                 'job_order_number' => $jobOrderNumberGenerator->generate(),
@@ -135,7 +179,9 @@ class JobOrderController extends Controller
 
         return response()->json([
             'message' => 'Job order updated successfully.',
-            'data' => $jobOrder->fresh()->load($this->jobOrderRelations()),
+            'data' => $jobOrder->fresh()->load(
+                $this->jobOrderRelations()
+            ),
         ]);
     }
 
@@ -166,9 +212,10 @@ class JobOrderController extends Controller
             $request->input('remarks')
         );
 
-        $history->load([
+                $history->load([
             'changedBy:id,name,email,role',
             'jobOrder.customer:id,name,contact_person,email,phone',
+            'jobOrder.creator:id,name,email,role',
             'jobOrder.activeAssignment.technician.user:id,name,email,role',
         ]);
 

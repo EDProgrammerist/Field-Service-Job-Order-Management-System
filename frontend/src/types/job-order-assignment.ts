@@ -21,7 +21,7 @@ export interface JobOrderAssignment {
   created_at: string;
   updated_at: string;
   technician: JobOrderTechnician;
-  job_order: JobOrderAssignmentJobOrder;
+  job_order?: JobOrderAssignmentJobOrder;
 }
 
 export interface CreateJobOrderAssignmentPayload {
