@@ -1,46 +1,55 @@
-import { CheckCircle2 } from "lucide-react";
+import { ClipboardCheck, RadioTower, UsersRound } from "lucide-react";
 
-const aboutPoints = [
-  "Customers keep service requests tied to their own account.",
-  "Staff manage job details, assignments, and recorded status changes.",
-  "Technicians see the work assigned to them and update its progress.",
+const aboutHighlights = [
+  {
+    title: "Connected Job Records",
+    description: "Request details stay with the job order.",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Clear Responsibility",
+    description: "Assignments stay visible to the service team.",
+    icon: UsersRound,
+  },
+  {
+    title: "Recorded Progress",
+    description: "Status updates remain available to each role.",
+    icon: RadioTower,
+  },
 ];
 
 export function AboutSection() {
   return (
     <section
-      className="scroll-mt-[72px] bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
+      className="scroll-mt-16 border-y border-[#dfe8e2] bg-white"
       id="about"
     >
-      <div className="mx-auto grid max-w-[1160px] gap-10 lg:grid-cols-[0.86fr_1.14fr] lg:gap-20">
-        <div>
-          <p className="text-sm font-extrabold text-[#0d7652]">About the system</p>
-          <h2 className="mt-4 text-[clamp(2rem,4vw,3.6rem)] font-black leading-[1.04] tracking-[-0.035em] text-[#14221d]">
-            One place for the service request and the work that follows.
-          </h2>
+      <div className="mx-auto grid max-w-[1180px] md:grid-cols-2 lg:grid-cols-[1.3fr_repeat(3,1fr)]">
+        <div className="px-4 py-6 sm:px-8 lg:px-10">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#0d7652]">
+            About the system
+          </p>
+          <p className="mt-2 max-w-sm text-sm font-bold leading-5 text-[#21352c]">
+            One shared workflow for customers, dispatchers, and technicians.
+          </p>
         </div>
 
-        <div className="lg:pt-8">
-          <p className="max-w-2xl text-base leading-7 text-[#4c5d55] sm:text-lg sm:leading-8">
-            The Field Service Job Order Management System connects the public
-            request process with the staff workflow behind each job. Every role
-            returns to the same job information instead of keeping separate records.
-          </p>
-          <ul className="mt-8 grid gap-4">
-            {aboutPoints.map((point) => (
-              <li
-                className="flex items-start gap-3 text-sm font-semibold leading-6 text-[#31463c] sm:text-base"
-                key={point}
-              >
-                <CheckCircle2
-                  aria-hidden="true"
-                  className="mt-0.5 size-5 shrink-0 text-[#0d7652]"
-                />
-                {point}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {aboutHighlights.map((item) => (
+          <div
+            className="flex items-center gap-3 border-t border-[#dfe8e2] px-4 py-5 sm:px-8 md:border-l md:[&:nth-child(2)]:border-t-0 lg:border-t-0 lg:px-6"
+            key={item.title}
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#e4f3e9] text-[#0d7652]">
+              <item.icon aria-hidden="true" className="size-5" strokeWidth={2.1} />
+            </span>
+            <div>
+              <h2 className="text-sm font-black text-[#1b2d25]">{item.title}</h2>
+              <p className="mt-1 text-xs leading-5 text-[#607068]">
+                {item.description}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

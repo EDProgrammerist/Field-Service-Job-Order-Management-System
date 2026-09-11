@@ -3,14 +3,13 @@ import {
   ClipboardList,
   FilePlus2,
   History,
-  Radar,
+  MapPinCheck,
+  RadioTower,
   UserCheck,
   UserRoundCheck,
-  Wrench,
 } from "lucide-react";
 
 export const navigationItems = [
-  { label: "Home", href: "#home" },
   { label: "About", href: "#about" },
   { label: "Services", href: "#services" },
   { label: "How It Works", href: "#how-it-works" },
@@ -19,50 +18,50 @@ export const navigationItems = [
 
 export const services = [
   {
-    title: "Service Request Intake",
+    title: "Job Order Management",
     description:
-      "Customers can submit the issue details the service team needs for review.",
-    icon: Wrench,
-  },
-  {
-    title: "Job Order Coordination",
-    description:
-      "Approved requests become organized job orders with the work details kept together.",
+      "Create, assign, and track each job order in one connected record.",
     icon: ClipboardList,
   },
   {
-    title: "Technician Assignment",
+    title: "Technician Management",
     description:
-      "Dispatchers can assign the right technician and keep responsibility visible.",
+      "Keep technician assignments and responsibility visible to the service team.",
     icon: UserRoundCheck,
   },
   {
-    title: "Status History",
+    title: "Real-Time Tracking",
     description:
-      "Customers and staff can follow recorded updates as work moves toward completion.",
+      "Follow recorded job progress and status updates throughout the work.",
+    icon: RadioTower,
+  },
+  {
+    title: "Records & History",
+    description:
+      "Review completed work and the status history connected to each job.",
     icon: ChartNoAxesCombined,
   },
 ];
 
 export const workflowSteps = [
   {
-    title: "Create a request",
-    description: "Describe the service issue and send the required details.",
+    title: "Create Job Order",
+    description: "Log a new service request with the details the team needs.",
     icon: FilePlus2,
   },
   {
-    title: "Review and assign",
-    description: "The service team reviews the request and assigns the work.",
+    title: "Assign & Schedule",
+    description: "Review the request and assign it to the right technician.",
     icon: UserCheck,
   },
   {
-    title: "Track the job",
-    description: "Follow the recorded status while the technician handles the work.",
-    icon: Radar,
+    title: "Track in Real-Time",
+    description: "Monitor progress through each recorded service status.",
+    icon: MapPinCheck,
   },
   {
-    title: "Close with a record",
-    description: "Completed work remains available in the job-order history.",
+    title: "Complete & Report",
+    description: "Close the job and keep its completed record available.",
     icon: History,
   },
 ];
