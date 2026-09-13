@@ -26,7 +26,7 @@ export function PublicAuthHeader() {
         to="/"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
-        <span className="hidden min-[360px]:inline">Back to homepage</span>
+        <span className="hidden min-[360px]:inline">Home</span>
         <span className="min-[360px]:hidden">Home</span>
       </Link>
     </header>

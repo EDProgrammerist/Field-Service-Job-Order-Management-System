@@ -128,23 +128,26 @@ class CustomerController extends Controller
      * Delete the specified customer.
      */
     public function destroy(Customer $customer): JsonResponse
-    {
-        if ($customer->user_id !== null) {
-            return response()->json([
-                'message' => 'Customer cannot be deleted while it is linked to a customer login account.',
-            ], 409);
-        }
+{
+    if ($customer->jobOrders()->exists()) {
+        return response()->json([
+            'message' => 'Customer cannot be deleted because it has related job orders.',
+        ], 409);
+    }
 
-        if ($customer->jobOrders()->exists()) {
-            return response()->json([
-                'message' => 'Customer cannot be deleted because it has related job orders.',
-            ], 409);
-        }
+    DB::transaction(function () use ($customer) {
+        $user = $customer->user;
 
         $customer->delete();
 
-        return response()->json([
-            'message' => 'Customer deleted successfully.',
-        ]);
-    }
+        if ($user !== null) {
+            $user->tokens()->delete();
+            $user->delete();
+        }
+    });
+
+    return response()->json([
+        'message' => 'Customer and linked login account deleted successfully.',
+    ]);
+}
 }

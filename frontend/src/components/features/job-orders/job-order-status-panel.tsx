@@ -12,7 +12,7 @@ import type { JobOrder, JobOrderStatus } from "@/types/job-order";
 
 interface JobOrderStatusPanelProps {
   jobOrder: JobOrder;
-  onStatusChanged: () => void | Promise<void>;
+  onStatusChanged: (updatedJobOrder: JobOrder) => void | Promise<void>;
 }
 
 const allowedTransitions: Record<JobOrderStatus, JobOrderStatus[]> = {
@@ -84,7 +84,7 @@ export function JobOrderStatusPanel({
       setRemarks("");
       setFieldErrors({});
 
-      await onStatusChanged();
+      await onStatusChanged(response.data.job_order);
     } catch (error) {
       const details = getApiErrorDetails(
         error,

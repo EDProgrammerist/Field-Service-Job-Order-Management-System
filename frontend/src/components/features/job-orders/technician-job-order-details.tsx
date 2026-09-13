@@ -184,7 +184,16 @@ export function TechnicianJobOrderDetails({
 
         <JobOrderStatusPanel
           jobOrder={jobOrder}
-          onStatusChanged={() => void loadJobOrder()}
+          onStatusChanged={(updatedJobOrder) => {
+            if (updatedJobOrder.status === "completed") {
+              navigate("/technician/my-jobs", {
+                replace: true,
+              });
+              return;
+            }
+
+            setJobOrder(updatedJobOrder);
+          }}
         />
 
         <Card>

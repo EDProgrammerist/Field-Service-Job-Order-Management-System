@@ -10,7 +10,7 @@ export function HeroSection() {
       <div className="relative isolate min-h-[520px] overflow-hidden lg:min-h-[560px]">
         <img
           alt="Field service technician reviewing a tablet at an industrial facility"
-          className="absolute inset-0 hidden size-full object-cover object-[72%_center] lg:block"
+          className="absolute inset-0 hidden size object-cover object-[72%_center] lg:block"
           src={fieldServiceHero}
         />
         <div className="absolute inset-y-0 left-0 hidden w-[62%] bg-white/95 lg:block" />
@@ -20,7 +20,7 @@ export function HeroSection() {
             <p className="inline-flex min-h-7 items-center rounded-full bg-[#e1f2e7] px-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#075d40]">
               Field Service Management
             </p>
-            <h1 className="mt-5 max-w-[720px] text-[clamp(2.65rem,4.3vw,3.75rem)] font-black leading-[0.98] tracking-[-0.045em] text-[#14221d]">
+            <h1 className="mt-5 max-w-[720px] text-[clamp(2.65rem,4.3vw,3.75rem)]  font-black leading-[0.98] tracking-[-0.045em] text-[#14221d]">
               People in the Field.
               <span className="block text-[#0d7652]">Progress for Every Job.</span>
             </h1>
@@ -50,13 +50,13 @@ export function HeroSection() {
             </div>
           </div>
 
-          <div className="pointer-events-none absolute right-[10%] top-10 hidden rotate-[-5deg] text-[#14221d] xl:block">
+          <div className="pointer-events-none absolute right-[12%] top-10 hidden rotate-[-5deg] text-[#14221d] xl:block">
             <p className="max-w-36 text-center text-base font-bold italic leading-5">
               Better service happens out there.
             </p>
             <ArrowDownLeft
               aria-hidden="true"
-              className="ml-9 mt-2 size-10 rotate-[-8deg]"
+              className="ml-14 mt-0 size-10 rotate-[-80deg]"
               strokeWidth={1.4}
             />
           </div>
