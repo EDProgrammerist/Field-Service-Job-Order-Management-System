@@ -4,46 +4,65 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreCustomerServiceRequest;
+use App\Http\Resources\CustomerServiceRequestResource;
 use App\Models\JobOrder;
-use App\Models\JobOrderStatusHistory;
-use App\Services\JobOrderNumberGenerator;
+use App\Services\CustomerServiceRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CustomerServiceRequestController extends Controller
 {
     /**
-     * Display a paginated list of service requests for the authenticated customer.
+     * Display requests owned by the authenticated customer.
      */
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'status' => ['nullable', Rule::in(JobOrder::STATUSES)],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'status' => [
+                'nullable',
+                Rule::in(JobOrder::STATUSES),
+            ],
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
         ]);
 
         $customer = $request->user()->customer;
 
         if (! $customer) {
             return response()->json([
-                'message' => 'Your account is not linked to a customer profile.',
+                'message' =>
+                    'Your account is not linked to a customer profile.',
             ], 422);
         }
 
-        $perPage = $validated['per_page'] ?? 15;
+        $perPage = (int) ($validated['per_page'] ?? 15);
 
         $jobOrders = JobOrder::query()
             ->where('customer_id', $customer->id)
             ->with($this->jobOrderRelations())
             ->when(
                 isset($validated['status']),
-                fn ($query) => $query->where('status', $validated['status'])
+                fn ($query) =>
+                    $query->where('status', $validated['status'])
             )
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
+
+        /*
+         * Transform paginator items while retaining the existing response:
+         * data.data contains the paginated request records.
+         */
+        $jobOrders->through(
+            fn (JobOrder $jobOrder): array =>
+                (new CustomerServiceRequestResource($jobOrder))
+                    ->resolve($request)
+        );
 
         return response()->json([
             'message' => 'Service requests retrieved successfully.',
@@ -52,15 +71,18 @@ class CustomerServiceRequestController extends Controller
     }
 
     /**
-     * Display one service request owned by the authenticated customer.
+     * Display one request owned by the authenticated customer.
      */
-    public function show(Request $request, JobOrder $jobOrder): JsonResponse
-    {
+    public function show(
+        Request $request,
+        JobOrder $jobOrder
+    ): JsonResponse {
         $customer = $request->user()->customer;
 
         if (! $customer) {
             return response()->json([
-                'message' => 'Your account is not linked to a customer profile.',
+                'message' =>
+                    'Your account is not linked to a customer profile.',
             ], 422);
         }
 
@@ -71,73 +93,55 @@ class CustomerServiceRequestController extends Controller
         }
 
         $jobOrder->load([
-            'customer:id,name,contact_person,email,phone',
-            'creator:id,name,email,role',
-            'activeAssignment.technician.user:id,name,email,role',
-            'statusHistories' => function ($query) {
-                $query->with('changedBy:id,name,email,role')
+            ...$this->jobOrderRelations(),
+            'statusHistories' => function ($query): void {
+                $query
+                    ->with('changedBy:id,name,email,role')
                     ->latest();
             },
         ]);
 
         return response()->json([
             'message' => 'Service request retrieved successfully.',
-            'data' => $jobOrder,
+            'data' => (
+                new CustomerServiceRequestResource($jobOrder)
+            )->resolve($request),
         ]);
     }
 
     /**
-     * Create a repair or service request for the authenticated customer.
+     * Create a customer request with a selected active technician.
      */
     public function store(
         StoreCustomerServiceRequest $request,
-        JobOrderNumberGenerator $jobOrderNumberGenerator
+        CustomerServiceRequestService $service
     ): JsonResponse {
         $customer = $request->user()->customer;
 
         if (! $customer) {
             return response()->json([
-                'message' => 'Your account is not linked to a customer profile.',
+                'message' =>
+                    'Your account is not linked to a customer profile.',
             ], 422);
         }
 
-        $jobOrder = DB::transaction(function () use (
-            $request,
+        $jobOrder = $service->create(
             $customer,
-            $jobOrderNumberGenerator
-        ) {
-            $jobOrder = JobOrder::create([
-                'job_order_number' => $jobOrderNumberGenerator->generate(),
-                'customer_id' => $customer->id,
-                'created_by' => $request->user()->id,
-                'title' => $request->input('title'),
-                'description' => $request->input('description'),
-                'service_address' => $request->input('service_address'),
-                'priority' => 'normal',
-                'status' => 'pending_review',
-            ]);
-
-            JobOrderStatusHistory::create([
-                'job_order_id' => $jobOrder->id,
-                'status' => 'pending_review',
-                'changed_by' => $request->user()->id,
-                'remarks' => 'Customer service request submitted.',
-            ]);
-
-            return $jobOrder;
-        });
+            $request->user(),
+            $request->validated()
+        );
 
         $jobOrder->load($this->jobOrderRelations());
 
         return response()->json([
             'message' => 'Service request submitted successfully.',
-            'data' => $jobOrder,
+            'data' => (
+                new CustomerServiceRequestResource($jobOrder)
+            )->resolve($request),
         ], 201);
     }
 
     /**
-     * Define relationships returned with a service request.
-     *
      * @return array<int, string>
      */
     private function jobOrderRelations(): array
@@ -145,6 +149,8 @@ class CustomerServiceRequestController extends Controller
         return [
             'customer:id,name,contact_person,email,phone',
             'creator:id,name,email,role',
+            'selectedTechnician.user:id,name',
+            'scheduledBy:id,name,email,role',
             'activeAssignment.technician.user:id,name,email,role',
         ];
     }

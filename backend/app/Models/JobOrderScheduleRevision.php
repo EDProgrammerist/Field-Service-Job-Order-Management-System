@@ -5,24 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class JobOrderStatusHistory extends Model
+class JobOrderScheduleRevision extends Model
 {
     use HasFactory;
-
-    protected $table = 'job_order_status_history';
 
     /**
      * @var list<string>
      */
     protected $fillable = [
         'job_order_id',
-        'previous_status',
-        'status',
-        'action',
-        'changed_by',
+        'version',
+        'scheduled_at',
+        'scheduled_end_at',
+        'scheduled_by',
         'remarks',
-        'metadata',
     ];
 
     public function jobOrder(): BelongsTo
@@ -30,9 +28,14 @@ class JobOrderStatusHistory extends Model
         return $this->belongsTo(JobOrder::class);
     }
 
-    public function changedBy(): BelongsTo
+    public function scheduledBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'changed_by');
+        return $this->belongsTo(User::class, 'scheduled_by');
+    }
+
+    public function technicianResponse(): HasOne
+    {
+        return $this->hasOne(JobOrderTechnicianResponse::class);
     }
 
     /**
@@ -41,7 +44,9 @@ class JobOrderStatusHistory extends Model
     protected function casts(): array
     {
         return [
-            'metadata' => 'array',
+            'version' => 'integer',
+            'scheduled_at' => 'datetime',
+            'scheduled_end_at' => 'datetime',
         ];
     }
 }

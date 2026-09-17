@@ -70,6 +70,36 @@ class User extends Authenticatable
     }
 
     /**
+     * Get job orders scheduled by this user.
+     */
+    public function scheduledJobOrders(): HasMany
+    {
+        return $this->hasMany(JobOrder::class, 'scheduled_by');
+    }
+
+    /**
+     * Get schedule revisions created by this user.
+     */
+    public function jobOrderScheduleRevisions(): HasMany
+    {
+        return $this->hasMany(
+            JobOrderScheduleRevision::class,
+            'scheduled_by'
+        );
+    }
+
+    /**
+     * Get technician responses performed by this user.
+     */
+    public function performedTechnicianResponses(): HasMany
+    {
+        return $this->hasMany(
+            JobOrderTechnicianResponse::class,
+            'responded_by'
+        );
+    }
+
+    /**
      * Get job-order status changes made by this user.
      */
     public function jobOrderStatusChanges(): HasMany

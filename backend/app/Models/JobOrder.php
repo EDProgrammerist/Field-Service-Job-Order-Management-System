@@ -19,24 +19,35 @@ class JobOrder extends Model
         'urgent',
     ];
 
+    /**
+     * Legacy statuses remain active until Phase 3 changes the workflow.
+     */
+    /**
+     * New workflow statuses plus temporary legacy compatibility values.
+     */
     public const STATUSES = [
-        'pending_review',
-        'created',
-        'assigned',
+        'pending_schedule',
+        'pending_technician_response',
+        'accepted',
+        'technician_rejected',
         'in_progress',
         'completed',
         'closed',
         'cancelled',
+
+        // Temporary legacy values retained until compatibility cleanup.
+        'pending_review',
+        'created',
+        'assigned',
     ];
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
         'job_order_number',
         'customer_id',
+        'selected_technician_id',
         'created_by',
         'title',
         'description',
@@ -44,28 +55,38 @@ class JobOrder extends Model
         'priority',
         'status',
         'scheduled_at',
+        'scheduled_end_at',
+        'schedule_version',
+        'scheduled_by',
         'completed_at',
         'closed_at',
     ];
 
-    /**
-     * Get the customer that owns this job order.
-     */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
     }
 
-    /**
-     * Get the user who created this job order.
-     */
+    public function selectedTechnician(): BelongsTo
+    {
+        return $this->belongsTo(
+            Technician::class,
+            'selected_technician_id'
+        );
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function scheduledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'scheduled_by');
+    }
+
     /**
-     * Get every assignment ever made for this job order.
+     * Legacy assignment history retained during migration.
      */
     public function assignments(): HasMany
     {
@@ -73,7 +94,7 @@ class JobOrder extends Model
     }
 
     /**
-     * Get the currently active technician assignment.
+     * Legacy active assignment retained for frontend compatibility.
      */
     public function activeAssignment(): HasOne
     {
@@ -82,23 +103,36 @@ class JobOrder extends Model
             ->latestOfMany();
     }
 
-    /**
-     * Get all status-history records for this job order.
-     */
+    public function scheduleRevisions(): HasMany
+    {
+        return $this->hasMany(JobOrderScheduleRevision::class);
+    }
+
+    public function latestScheduleRevision(): HasOne
+    {
+        return $this->hasOne(JobOrderScheduleRevision::class)
+            ->latestOfMany('version');
+    }
+
+    public function technicianResponses(): HasMany
+    {
+        return $this->hasMany(JobOrderTechnicianResponse::class);
+    }
+
     public function statusHistories(): HasMany
     {
         return $this->hasMany(JobOrderStatusHistory::class);
     }
 
     /**
-     * Get the attributes that should be cast.
-     *
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
             'scheduled_at' => 'datetime',
+            'scheduled_end_at' => 'datetime',
+            'schedule_version' => 'integer',
             'completed_at' => 'datetime',
             'closed_at' => 'datetime',
         ];

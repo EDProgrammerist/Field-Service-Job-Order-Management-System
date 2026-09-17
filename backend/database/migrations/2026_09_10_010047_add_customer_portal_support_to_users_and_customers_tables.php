@@ -12,12 +12,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("
-            ALTER TABLE `users`
-            MODIFY `role`
-            ENUM('admin', 'dispatcher', 'technician', 'customer')
-            NOT NULL DEFAULT 'technician'
-        ");
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement("
+                ALTER TABLE `users`
+                MODIFY `role`
+                ENUM('admin', 'dispatcher', 'technician', 'customer')
+                NOT NULL DEFAULT 'technician'
+            ");
+        } else {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('role')
+                    ->default('technician')
+                    ->change();
+            });
+        }
 
         Schema::table('customers', function (Blueprint $table) {
             $table->foreignId('user_id')
@@ -44,11 +52,13 @@ return new class extends Migration
             ->where('role', 'customer')
             ->update(['role' => 'technician']);
 
-        DB::statement("
-            ALTER TABLE `users`
-            MODIFY `role`
-            ENUM('admin', 'dispatcher', 'technician')
-            NOT NULL DEFAULT 'technician'
-        ");
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement("
+                ALTER TABLE `users`
+                MODIFY `role`
+                ENUM('admin', 'dispatcher', 'technician')
+                NOT NULL DEFAULT 'technician'
+            ");
+        }
     }
 };

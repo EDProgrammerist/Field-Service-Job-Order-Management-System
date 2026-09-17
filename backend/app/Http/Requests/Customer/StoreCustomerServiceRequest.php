@@ -3,28 +3,59 @@
 namespace App\Http\Requests\Customer;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCustomerServiceRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Only authenticated customers may submit service requests.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->role === 'customer';
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, array<int, string>>
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
-            'service_address' => ['required', 'string'],
+            'selected_technician_id' => [
+                'bail',
+                'required',
+                'integer',
+                Rule::exists('technicians', 'id')
+                    ->where('is_active', true),
+            ],
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'description' => [
+                'required',
+                'string',
+                'max:5000',
+            ],
+            'service_address' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'selected_technician_id.required' =>
+                'Please select your preferred technician.',
+            'selected_technician_id.exists' =>
+                'The selected technician is unavailable or inactive.',
         ];
     }
 }

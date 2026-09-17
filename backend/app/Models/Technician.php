@@ -38,6 +38,25 @@ class Technician extends Model
     }
 
     /**
+     * Get repair requests where this technician was selected by the customer.
+     */
+    public function selectedJobOrders(): HasMany
+    {
+        return $this->hasMany(
+            JobOrder::class,
+            'selected_technician_id'
+        );
+    }
+
+    /**
+     * Get this technician's schedule responses.
+     */
+    public function jobOrderTechnicianResponses(): HasMany
+    {
+        return $this->hasMany(JobOrderTechnicianResponse::class);
+    }
+
+    /**
      * Get the job-order assignments for this technician.
      */
     public function jobOrderAssignments(): HasMany

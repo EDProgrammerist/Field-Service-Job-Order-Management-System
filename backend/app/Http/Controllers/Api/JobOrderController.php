@@ -50,21 +50,21 @@ class JobOrderController extends Controller
             ->with($this->jobOrderRelations())
             ->when(
                 array_key_exists('status', $filters),
-                fn ($query) => $query->where(
+                fn($query) => $query->where(
                     'status',
                     $filters['status']
                 )
             )
             ->when(
                 array_key_exists('priority', $filters),
-                fn ($query) => $query->where(
+                fn($query) => $query->where(
                     'priority',
                     $filters['priority']
                 )
             )
             ->when(
                 array_key_exists('customer_id', $filters),
-                fn ($query) => $query->where(
+                fn($query) => $query->where(
                     'customer_id',
                     $filters['customer_id']
                 )
@@ -212,10 +212,12 @@ class JobOrderController extends Controller
             $request->input('remarks')
         );
 
-                $history->load([
+        $history->load([
             'changedBy:id,name,email,role',
             'jobOrder.customer:id,name,contact_person,email,phone',
             'jobOrder.creator:id,name,email,role',
+            'jobOrder.selectedTechnician.user:id,name,email,role',
+            'jobOrder.scheduledBy:id,name,email,role',
             'jobOrder.activeAssignment.technician.user:id,name,email,role',
         ]);
 
@@ -238,6 +240,8 @@ class JobOrderController extends Controller
         return [
             'customer:id,name,contact_person,email,phone',
             'creator:id,name,email,role',
+            'selectedTechnician.user:id,name,email,role',
+            'scheduledBy:id,name,email,role',
             'activeAssignment.technician.user:id,name,email,role',
         ];
     }
