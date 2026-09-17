@@ -20,10 +20,43 @@ class JobOrder extends Model
     ];
 
     /**
-     * Legacy statuses remain active until Phase 3 changes the workflow.
+     * Statuses shown as active work on a technician's schedule.
      */
+    public const TECHNICIAN_SCHEDULE_STATUSES = [
+        'accepted',
+        'in_progress',
+    ];
+
     /**
-     * New workflow statuses plus temporary legacy compatibility values.
+     * Statuses visible in the dispatcher scheduling workspace.
+     */
+    public const SCHEDULING_STATUSES = [
+        'pending_schedule',
+        'pending_technician_response',
+        'technician_rejected',
+    ];
+
+    /**
+     * Requests which currently require a new official schedule.
+     */
+    public const NEEDS_SCHEDULING_STATUSES = [
+        'pending_schedule',
+        'technician_rejected',
+    ];
+
+    /**
+     * Statuses that reserve a technician's schedule.
+     *
+     * "assigned" is retained temporarily for legacy records.
+     */
+    public const BLOCKING_SCHEDULE_STATUSES = [
+        'accepted',
+        'in_progress',
+        'assigned',
+    ];
+
+    /**
+     * Legacy statuses remain active until Phase 3 changes the workflow.
      */
     public const STATUSES = [
         'pending_schedule',
@@ -112,6 +145,12 @@ class JobOrder extends Model
     {
         return $this->hasOne(JobOrderScheduleRevision::class)
             ->latestOfMany('version');
+    }
+
+    public function latestTechnicianResponse(): HasOne
+    {
+        return $this->hasOne(JobOrderTechnicianResponse::class)
+            ->latestOfMany();
     }
 
     public function technicianResponses(): HasMany
