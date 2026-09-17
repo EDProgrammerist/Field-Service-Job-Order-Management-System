@@ -1,9 +1,8 @@
-import { Route, Routes } from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 
 import { ProtectedRoute } from "@/components/features/auth/protected-route";
 import AdminCustomersPage from "@/pages/admin/customers";
 import AdminDashboardPage from "@/pages/admin/dashboard";
-import AdminCreateJobOrderPage from "@/pages/admin/job-orders/create";
 import AdminJobOrderDetailsPage from "@/pages/admin/job-orders/details";
 import AdminEditJobOrderPage from "@/pages/admin/job-orders/edit";
 import AdminJobOrdersPage from "@/pages/admin/job-orders";
@@ -113,7 +112,7 @@ export function AppRoutes() {
         path="/admin/job-orders/create"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminCreateJobOrderPage />
+            <Navigate to="/admin/job-orders" replace />
           </ProtectedRoute>
         }
       />

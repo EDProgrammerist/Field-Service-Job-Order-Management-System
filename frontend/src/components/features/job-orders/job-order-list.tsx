@@ -65,11 +65,6 @@ export function JobOrderList() {
     getSuccessMessage(location.state),
   );
 
-  const createPath =
-    user?.role === "admin"
-      ? "/admin/job-orders/create"
-      : "/dispatcher/job-orders/create";
-
   const loadJobOrders = useCallback(
     async (
       pageToLoad: number,
@@ -156,10 +151,15 @@ export function JobOrderList() {
           </p>
         </div>
 
-        <Button type="button" onClick={() => navigate(createPath)}>
-          <Plus />
-          Create job order
-        </Button>
+        {user?.role === "dispatcher" ? (
+          <Button
+            type="button"
+            onClick={() => navigate("/dispatcher/job-orders/create")}
+          >
+            <Plus />
+            Create job order
+          </Button>
+        ) : null}
       </div>
 
       {successMessage ? (

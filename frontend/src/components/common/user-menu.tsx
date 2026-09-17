@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/auth-context";
 
+interface UserMenuProps {
+  compact?: boolean;
+}
+
 function getInitials(name: string) {
   return name
     .split(/\s+/)
@@ -29,7 +33,7 @@ function formatRole(role: string) {
   return `${role.charAt(0).toUpperCase()}${role.slice(1)}`;
 }
 
-export function UserMenu() {
+export function UserMenu({ compact = false }: UserMenuProps) {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
@@ -62,7 +66,11 @@ export function UserMenu() {
         aria-label="Open user menu"
         render={
           <Button
-            className="h-auto gap-2 px-2 py-1.5"
+            className={
+              compact
+                ? "size-9 rounded-full p-0 transition-transform duration-200 hover:scale-105 active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
+                : "h-auto gap-2 px-2 py-1.5"
+            }
             variant="ghost"
           />
         }
@@ -71,16 +79,24 @@ export function UserMenu() {
           <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
         </Avatar>
 
-        <span className="hidden text-left sm:grid">
-          <span className="max-w-36 truncate text-sm font-medium">
-            {user.name}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {formatRole(user.role)}
-          </span>
-        </span>
+        {!compact ? (
+          <>
+            <span className="hidden text-left sm:grid">
+              <span className="max-w-36 truncate text-sm font-medium">
+                {user.name}
+              </span>
 
-        <ChevronDown aria-hidden="true" className="hidden size-4 sm:block" />
+              <span className="text-xs text-muted-foreground">
+                {formatRole(user.role)}
+              </span>
+            </span>
+
+            <ChevronDown
+              aria-hidden="true"
+              className="hidden size-4 sm:block"
+            />
+          </>
+        ) : null}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-64">
@@ -97,7 +113,10 @@ export function UserMenu() {
 
         {logoutError ? (
           <>
-            <p className="px-2 py-1.5 text-xs text-destructive" role="alert">
+            <p
+              className="px-2 py-1.5 text-xs text-destructive"
+              role="alert"
+            >
               {logoutError}
             </p>
             <DropdownMenuSeparator />

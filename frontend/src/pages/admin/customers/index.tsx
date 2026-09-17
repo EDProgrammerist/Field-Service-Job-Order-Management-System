@@ -1,10 +1,10 @@
-import { DashboardLayout } from "@/components/common/dashboard-layout";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { CustomerManagement } from "@/components/features/customers/customer-management";
 
 export default function AdminCustomersPage() {
   return (
-    <DashboardLayout>
+    <DashboardShell>
       <CustomerManagement />
-    </DashboardLayout>
+    </DashboardShell>
   );
 }

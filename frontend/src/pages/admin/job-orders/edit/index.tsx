@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 
-import { DashboardLayout } from "@/components/common/dashboard-layout";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { JobOrderForm } from "@/components/features/job-orders/job-order-form";
 
 export default function AdminEditJobOrderPage() {
@@ -12,7 +12,7 @@ export default function AdminEditJobOrderPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardShell>
       <section className="space-y-6">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
@@ -31,6 +31,6 @@ export default function AdminEditJobOrderPage() {
           listPath="/admin/job-orders"
         />
       </section>
-    </DashboardLayout>
+    </DashboardShell>
   );
 }

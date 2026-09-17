@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 
-import { DashboardLayout } from "@/components/common/dashboard-layout";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { JobOrderDetails } from "@/components/features/job-orders/job-order-details";
 
 export default function AdminJobOrderDetailsPage() {
@@ -12,12 +12,12 @@ export default function AdminJobOrderDetailsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardShell>
       <JobOrderDetails
         jobOrderId={parsedJobOrderId}
         listPath="/admin/job-orders"
         editPath={`/admin/job-orders/${parsedJobOrderId}/edit`}
       />
-    </DashboardLayout>
+    </DashboardShell>
   );
 }

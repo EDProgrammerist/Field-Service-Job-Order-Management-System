@@ -1,13 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
 import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+} from "react";
+import {
+  ArrowRight,
   CalendarClock,
   ClipboardList,
-  RefreshCw,
+  Plus,
+  RefreshCcw,
   UserRoundCheck,
   UsersRound,
   Wrench,
+  type LucideIcon,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 
 import {
   JobOrderPriorityBadge,
@@ -21,15 +30,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/auth-context";
 import { getDispatcherDashboardData } from "@/services/dashboard";
 import type { DispatcherDashboardData } from "@/types/dashboard";
 import type { JobOrder } from "@/types/job-order";
 
-interface DashboardMetric {
+interface QueueOverviewItem {
   label: string;
   value: number;
-  icon: typeof ClipboardList;
+  description: string;
+  className: string;
+}
+
+interface DispatcherMetricCardProps {
+  label: string;
+  value: number;
+  description: string;
+  href: string;
+  icon: LucideIcon;
 }
 
 function formatDate(value: string | null) {
@@ -37,90 +55,178 @@ function formatDate(value: string | null) {
     return "Not scheduled";
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-PH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
 }
 
-function DashboardSkeleton() {
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return "Good morning";
+  }
+
+  if (hour < 18) {
+    return "Good afternoon";
+  }
+
+  return "Good evening";
+}
+
+function getPercentage(value: number, total: number) {
+  if (total <= 0) {
+    return 0;
+  }
+
+  return Math.min(100, Math.round((value / total) * 100));
+}
+
+function DashboardCard({
+  className = "",
+  ...props
+}: ComponentProps<typeof Card>) {
   return (
-    <div className="space-y-6">
-      <div>
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="mt-3 h-5 w-96 max-w-full" />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }, (_, index) => (
-          <Card key={index}>
-            <CardContent className="space-y-3 pt-6">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-8 w-16" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardContent className="space-y-4 pt-6">
-            <Skeleton className="h-6 w-44" />
-            <Skeleton className="h-44 w-full" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="space-y-4 pt-6">
-            <Skeleton className="h-6 w-44" />
-            <Skeleton className="h-44 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <Card
+      className={[
+        "gap-0 rounded-none bg-background py-0 shadow-none ring-0",
+        className,
+      ].join(" ")}
+      {...props}
+    />
   );
 }
 
-function JobOrderItem({
-  jobOrder,
-  onView,
-}: {
-  jobOrder: JobOrder;
-  onView: () => void;
-}) {
+function DispatcherMetricCard({
+  label,
+  value,
+  description,
+  href,
+  icon: Icon,
+}: DispatcherMetricCardProps) {
   return (
-    <article className="rounded-lg border p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground">
-            {jobOrder.job_order_number}
-          </p>
-          <h3 className="mt-1 truncate font-semibold">{jobOrder.title}</h3>
-          <p className="mt-1 truncate text-sm text-muted-foreground">
-            {jobOrder.customer.name}
-          </p>
+    <DashboardCard className="min-h-48 xl:col-span-4">
+      <CardContent className="flex h-full flex-col justify-between p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">{label}</p>
+
+            <p className="mt-2 text-3xl font-semibold tracking-tight">
+              {value.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="flex size-9 items-center justify-center rounded-md border bg-background">
+            <Icon
+              aria-hidden={true}
+              className="size-4 text-muted-foreground"
+            />
+          </div>
         </div>
 
-        <JobOrderStatusBadge status={jobOrder.status} />
+        <div className="mt-8 flex items-end justify-between gap-4">
+          <p className="max-w-48 text-xs leading-5 text-muted-foreground">
+            {description}
+          </p>
+
+          <Button
+            render={<Link to={href} />}
+            size="sm"
+            variant="outline"
+          >
+            View
+            <ArrowRight aria-hidden={true} />
+          </Button>
+        </div>
+      </CardContent>
+    </DashboardCard>
+  );
+}
+
+function JobOrderQueueItem({
+  jobOrder,
+}: {
+  jobOrder: JobOrder;
+}) {
+  return (
+    <article className="flex flex-col gap-4 border-b p-5 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-mono text-xs font-medium text-muted-foreground">
+            {jobOrder.job_order_number}
+          </p>
+
+          <JobOrderPriorityBadge priority={jobOrder.priority} />
+        </div>
+
+        <p className="mt-2 truncate font-medium">{jobOrder.title}</p>
+
+        <p className="mt-1 truncate text-sm text-muted-foreground">
+          {jobOrder.customer.name}
+        </p>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <JobOrderPriorityBadge priority={jobOrder.priority} />
+      <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+        <JobOrderStatusBadge status={jobOrder.status} />
 
-        <Button type="button" size="sm" variant="outline" onClick={onView}>
+        <Button
+          render={
+            <Link to={`/dispatcher/job-orders/${jobOrder.id}`} />
+          }
+          size="sm"
+          variant="ghost"
+        >
           View
+          <ArrowRight aria-hidden={true} />
         </Button>
       </div>
     </article>
   );
 }
 
-export function DispatcherDashboard() {
-  const navigate = useNavigate();
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="h-7 w-56 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-80 max-w-full animate-pulse rounded bg-muted" />
+        </div>
 
-  const [dashboard, setDashboard] = useState<DispatcherDashboardData | null>(
-    null,
+        <div className="flex gap-2">
+          <div className="size-8 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-36 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+
+      <div className="h-24 animate-pulse rounded-none bg-muted" />
+
+      <div className="grid gap-px bg-border p-px xl:grid-cols-12">
+        <div className="min-h-80 animate-pulse bg-background xl:col-span-7" />
+        <div className="min-h-80 animate-pulse bg-background xl:col-span-5" />
+
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            className="min-h-48 animate-pulse bg-background xl:col-span-4"
+            key={index}
+          />
+        ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-12">
+        <div className="h-96 animate-pulse bg-muted xl:col-span-7" />
+        <div className="h-96 animate-pulse bg-muted xl:col-span-5" />
+      </div>
+    </div>
   );
+}
+
+export function DispatcherDashboard() {
+  const { user } = useAuth();
+
+  const [dashboard, setDashboard] =
+    useState<DispatcherDashboardData | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -133,7 +239,7 @@ export function DispatcherDashboard() {
       setDashboard(dashboardData);
     } catch {
       setErrorMessage(
-        "Unable to load dispatcher dashboard data. Please check the Laravel API and try again.",
+        "Unable to load dispatcher data. Check the Laravel API connection and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -148,157 +254,457 @@ export function DispatcherDashboard() {
     return () => window.clearTimeout(timeoutId);
   }, [loadDashboard]);
 
+  const dispatcherName =
+    user?.name?.trim().split(/\s+/)[0] || "Dispatcher";
+
+  const operationalTotal = dashboard
+    ? dashboard.unassignedJobOrderCount +
+      dashboard.assignedJobOrderCount +
+      dashboard.activeJobOrderCount
+    : 0;
+
+  const queueOverview = useMemo<QueueOverviewItem[]>(() => {
+    if (!dashboard) {
+      return [];
+    }
+
+    return [
+      {
+        label: "Awaiting assignment",
+        value: dashboard.unassignedJobOrderCount,
+        description: "Ready for technician assignment",
+        className: "bg-slate-700 dark:bg-slate-300",
+      },
+      {
+        label: "Assigned",
+        value: dashboard.assignedJobOrderCount,
+        description: "Allocated to field technicians",
+        className: "bg-blue-600",
+      },
+      {
+        label: "In progress",
+        value: dashboard.activeJobOrderCount,
+        description: "Currently being serviced",
+        className: "bg-amber-500",
+      },
+    ];
+  }, [dashboard]);
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
 
   if (!dashboard) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Dashboard data unavailable</CardTitle>
-          <CardDescription>{errorMessage}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button type="button" onClick={() => void loadDashboard()}>
-            <RefreshCw />
-            Try again
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="mx-auto max-w-xl pt-12">
+        <Card className="rounded-none shadow-none">
+          <CardHeader>
+            <CardTitle>Dispatcher data unavailable</CardTitle>
+            <CardDescription>{errorMessage}</CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <Button
+              type="button"
+              onClick={() => void loadDashboard()}
+            >
+              <RefreshCcw aria-hidden={true} />
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
-  const metrics: DashboardMetric[] = [
-    {
-      label: "Unassigned work",
-      value: dashboard.unassignedJobOrderCount,
-      icon: ClipboardList,
-    },
-    {
-      label: "Assigned work",
-      value: dashboard.assignedJobOrderCount,
-      icon: UserRoundCheck,
-    },
-    {
-      label: "Active jobs",
-      value: dashboard.activeJobOrderCount,
-      icon: Wrench,
-    },
-    {
-      label: "Active technicians",
-      value: dashboard.activeTechnicianCount,
-      icon: UsersRound,
-    },
-  ];
-
   return (
-    <div className="space-y-6">
-      <section>
-        <p className="text-sm font-medium text-muted-foreground">
-          Operations overview
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Dispatcher Dashboard
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Monitor unassigned work, technician availability, and the current job
-          order queue.
-        </p>
+    <div className="space-y-4">
+      {/* Heading */}
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            {getGreeting()}, {dispatcherName}
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Assign technicians and monitor active field work.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            aria-label="Refresh dispatcher dashboard"
+            onClick={() => void loadDashboard()}
+            size="icon"
+            type="button"
+            variant="outline"
+          >
+            <RefreshCcw aria-hidden={true} />
+          </Button>
+
+          <Button
+            render={<Link to="/dispatcher/job-orders/create" />}
+          >
+            <Plus aria-hidden={true} />
+            Create job order
+          </Button>
+        </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => (
-          <Card key={metric.label}>
-            <CardContent className="flex items-start justify-between pt-6">
-              <div>
-                <p className="text-sm text-muted-foreground">{metric.label}</p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight">
-                  {metric.value}
-                </p>
-              </div>
+      {/* Dispatch update */}
+      <DashboardCard className="ring-1 ring-border">
+        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-full bg-emerald-600"
+              />
 
-              <div className="rounded-lg bg-muted p-2.5 text-muted-foreground">
-                <metric.icon aria-hidden="true" className="size-5" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+              <p className="text-sm font-medium">Dispatch update</p>
 
-      <section className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Unassigned work queue</CardTitle>
+              <span className="text-xs text-muted-foreground">
+                {new Intl.DateTimeFormat("en-PH", {
+                  dateStyle: "medium",
+                }).format(new Date())}
+              </span>
+            </div>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              {dashboard.unassignedJobOrderCount.toLocaleString()} job
+              orders need assignment.{" "}
+              {dashboard.activeTechnicianCount.toLocaleString()} technicians
+              are currently active.
+            </p>
+          </div>
+
+          <Button
+            render={<Link to="/dispatcher/job-orders" />}
+            size="sm"
+            variant="outline"
+          >
+            Open work queue
+            <ArrowRight aria-hidden={true} />
+          </Button>
+        </CardContent>
+      </DashboardCard>
+
+      {/* Operational overview */}
+      <section className="grid gap-px bg-border p-px xl:grid-cols-12">
+        <DashboardCard className="xl:col-span-7">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList
+                aria-hidden={true}
+                className="size-4 text-muted-foreground"
+              />
+              Dispatch workload
+            </CardTitle>
+
             <CardDescription>
-              Created job orders that need a technician assignment.
+              Current work across the assignment and service workflow.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-3">
-            {dashboard.unassignedJobOrders.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-                No unassigned job orders are waiting.
+          <CardContent className="p-5">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Operational job orders
               </p>
+
+              <p className="mt-1 text-3xl font-semibold tracking-tight">
+                {operationalTotal.toLocaleString()}
+              </p>
+            </div>
+
+            <div className="mt-8 space-y-6">
+              {queueOverview.map((item) => {
+                const percentage = getPercentage(
+                  item.value,
+                  operationalTotal,
+                );
+
+                return (
+                  <div key={item.label}>
+                    <div className="mb-2 flex items-end justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {item.label}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground">
+                          {item.description}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-mono text-sm font-semibold tabular-nums">
+                          {item.value.toLocaleString()}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground">
+                          {percentage}%
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={`h-full rounded-full ${item.className}`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </DashboardCard>
+
+        <DashboardCard className="xl:col-span-5">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="flex items-center gap-2">
+              <UsersRound
+                aria-hidden={true}
+                className="size-4 text-muted-foreground"
+              />
+              Dispatch totals
+            </CardTitle>
+
+            <CardDescription>
+              A quick view of workload and field capacity.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            <div className="grid grid-cols-2 gap-px bg-border">
+              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
+                <UsersRound
+                  aria-hidden={true}
+                  className="size-4 text-muted-foreground"
+                />
+
+                <div>
+                  <p className="text-2xl font-semibold">
+                    {dashboard.activeTechnicianCount.toLocaleString()}
+                  </p>
+
+                  <p className="text-sm text-muted-foreground">
+                    Active technicians
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
+                <ClipboardList
+                  aria-hidden={true}
+                  className="size-4 text-muted-foreground"
+                />
+
+                <div>
+                  <p className="text-2xl font-semibold">
+                    {operationalTotal.toLocaleString()}
+                  </p>
+
+                  <p className="text-sm text-muted-foreground">
+                    Operational jobs
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
+                <UserRoundCheck
+                  aria-hidden={true}
+                  className="size-4 text-muted-foreground"
+                />
+
+                <div>
+                  <p className="text-2xl font-semibold">
+                    {dashboard.assignedJobOrderCount.toLocaleString()}
+                  </p>
+
+                  <p className="text-sm text-muted-foreground">
+                    Assigned jobs
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
+                <Wrench
+                  aria-hidden={true}
+                  className="size-4 text-muted-foreground"
+                />
+
+                <div>
+                  <p className="text-2xl font-semibold">
+                    {dashboard.activeJobOrderCount.toLocaleString()}
+                  </p>
+
+                  <p className="text-sm text-muted-foreground">
+                    Jobs in progress
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </DashboardCard>
+
+        <DispatcherMetricCard
+          description="New job orders that still require a technician."
+          href="/dispatcher/job-orders"
+          icon={ClipboardList}
+          label="Awaiting assignment"
+          value={dashboard.unassignedJobOrderCount}
+        />
+
+        <DispatcherMetricCard
+          description="Work already allocated to field technicians."
+          href="/dispatcher/job-orders"
+          icon={UserRoundCheck}
+          label="Assigned workload"
+          value={dashboard.assignedJobOrderCount}
+        />
+
+        <DispatcherMetricCard
+          description="Jobs currently being handled in the field."
+          href="/dispatcher/job-orders"
+          icon={Wrench}
+          label="Active field jobs"
+          value={dashboard.activeJobOrderCount}
+        />
+      </section>
+
+      {/* Queue and schedules */}
+      <section className="grid gap-4 xl:grid-cols-12">
+        <DashboardCard className="ring-1 ring-border xl:col-span-7">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList
+                aria-hidden={true}
+                className="size-4 text-muted-foreground"
+              />
+              Unassigned work queue
+            </CardTitle>
+
+            <CardDescription>
+              Job orders waiting for technician assignment.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            {dashboard.unassignedJobOrders.length === 0 ? (
+              <div className="p-8 text-center">
+                <UserRoundCheck
+                  aria-hidden={true}
+                  className="mx-auto size-8 text-muted-foreground"
+                />
+
+                <p className="mt-3 font-medium">
+                  The assignment queue is clear
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  New job orders will appear here.
+                </p>
+              </div>
             ) : (
               dashboard.unassignedJobOrders.map((jobOrder) => (
-                <JobOrderItem
-                  key={jobOrder.id}
+                <JobOrderQueueItem
                   jobOrder={jobOrder}
-                  onView={() =>
-                    navigate(`/dispatcher/job-orders/${jobOrder.id}`)
-                  }
+                  key={jobOrder.id}
                 />
               ))
             )}
 
-            <Button
-              className="w-full"
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/dispatcher/job-orders")}
-            >
-              View all job orders
-            </Button>
+            <div className="border-t p-4">
+              <Button
+                className="w-full"
+                render={<Link to="/dispatcher/job-orders" />}
+                variant="outline"
+              >
+                View all job orders
+                <ArrowRight aria-hidden={true} />
+              </Button>
+            </div>
           </CardContent>
-        </Card>
+        </DashboardCard>
 
-        <Card>
-          <CardHeader>
+        <DashboardCard className="ring-1 ring-border xl:col-span-5">
+          <CardHeader className="border-b p-5">
             <CardTitle className="flex items-center gap-2">
-              <CalendarClock className="size-5" />
-              Recent work schedules
+              <CalendarClock
+                aria-hidden={true}
+                className="size-4 text-muted-foreground"
+              />
+              Recent schedules
             </CardTitle>
+
             <CardDescription>
-              Scheduled date and time from the latest job-order records.
+              Scheduling details from recent job orders.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-3">
+          <CardContent className="p-0">
             {dashboard.recentJobOrders.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-                No job orders have been created yet.
-              </p>
+              <div className="p-8 text-center">
+                <CalendarClock
+                  aria-hidden={true}
+                  className="mx-auto size-8 text-muted-foreground"
+                />
+
+                <p className="mt-3 font-medium">
+                  No schedules available
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Scheduled job orders will appear here.
+                </p>
+              </div>
             ) : (
               dashboard.recentJobOrders.map((jobOrder) => (
                 <article
+                  className="border-b p-5 last:border-b-0"
                   key={jobOrder.id}
-                  className="flex items-start justify-between gap-3 rounded-lg border p-4"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{jobOrder.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {jobOrder.customer.name}
-                    </p>
-                    <p className="mt-2 text-sm">{formatDate(jobOrder.scheduled_at)}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">
+                        {jobOrder.title}
+                      </p>
+
+                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                        {jobOrder.customer.name}
+                      </p>
+                    </div>
+
+                    <JobOrderStatusBadge
+                      status={jobOrder.status}
+                    />
                   </div>
 
-                  <JobOrderStatusBadge status={jobOrder.status} />
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(jobOrder.scheduled_at)}
+                    </p>
+
+                    <Button
+                      render={
+                        <Link
+                          to={`/dispatcher/job-orders/${jobOrder.id}`}
+                        />
+                      }
+                      size="sm"
+                      variant="ghost"
+                    >
+                      Details
+                      <ArrowRight aria-hidden={true} />
+                    </Button>
+                  </div>
                 </article>
               ))
             )}
           </CardContent>
-        </Card>
+        </DashboardCard>
       </section>
     </div>
   );

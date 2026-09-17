@@ -1,10 +1,10 @@
-import { DashboardLayout } from "@/components/common/dashboard-layout";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { TechnicianManagement } from "@/components/features/technicians/technician-management";
 
 export default function AdminTechniciansPage() {
   return (
-    <DashboardLayout>
+    <DashboardShell>
       <TechnicianManagement />
-    </DashboardLayout>
+    </DashboardShell>
   );
 }
