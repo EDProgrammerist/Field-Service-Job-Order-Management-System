@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -105,6 +106,27 @@ class User extends Authenticatable
     public function jobOrderStatusChanges(): HasMany
     {
         return $this->hasMany(JobOrderStatusHistory::class, 'changed_by');
+    }
+
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Conversation::class,
+            'conversation_participants'
+        )
+            ->withPivot([
+                'participant_role',
+                'last_read_at',
+            ])
+            ->withTimestamps();
+    }
+
+    public function sentConversationMessages(): HasMany
+    {
+        return $this->hasMany(
+            ConversationMessage::class,
+            'sender_id'
+        );
     }
 
     /**

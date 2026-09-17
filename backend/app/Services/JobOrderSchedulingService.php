@@ -13,6 +13,12 @@ use Illuminate\Validation\ValidationException;
 
 class JobOrderSchedulingService
 {
+    public function __construct(
+        private readonly TechnicianAvailabilityService
+            $availabilityService
+    ) {
+    }
+
     /**
      * Assign or update the official schedule without changing technicians.
      *
@@ -28,9 +34,41 @@ class JobOrderSchedulingService
             $scheduledBy,
             $data
         ): JobOrder {
+            /*
+             * Read the immutable customer selection, then lock the technician
+             * before the job order. Technician acceptance uses the same lock
+             * order, reducing concurrent scheduling deadlocks.
+             */
+            $selectedTechnicianId = JobOrder::query()
+                ->whereKey($jobOrder->id)
+                ->value('selected_technician_id');
+
+            if ($selectedTechnicianId === null) {
+                throw ValidationException::withMessages([
+                    'selected_technician_id' => [
+                        'The customer must select a technician before scheduling.',
+                    ],
+                ]);
+            }
+
+            $technician = Technician::query()
+                ->lockForUpdate()
+                ->find($selectedTechnicianId);
+
             $lockedJobOrder = JobOrder::query()
                 ->lockForUpdate()
                 ->findOrFail($jobOrder->id);
+
+            if (
+                $lockedJobOrder->selected_technician_id
+                !== $selectedTechnicianId
+            ) {
+                throw ValidationException::withMessages([
+                    'selected_technician_id' => [
+                        'The technician selection changed. Refresh the request and try again.',
+                    ],
+                ])->status(409);
+            }
 
             if (! in_array(
                 $lockedJobOrder->status,
@@ -43,18 +81,6 @@ class JobOrderSchedulingService
                     ],
                 ]);
             }
-
-            if ($lockedJobOrder->selected_technician_id === null) {
-                throw ValidationException::withMessages([
-                    'selected_technician_id' => [
-                        'The customer must select a technician before scheduling.',
-                    ],
-                ]);
-            }
-
-            $technician = Technician::query()
-                ->lockForUpdate()
-                ->find($lockedJobOrder->selected_technician_id);
 
             if (! $technician || ! $technician->is_active) {
                 throw ValidationException::withMessages([
@@ -80,10 +106,12 @@ class JobOrderSchedulingService
                 ]);
             }
 
-            $conflict = $this->findConflict(
-                $lockedJobOrder,
+            $conflict = $this->availabilityService->firstConflict(
+                $technician,
                 $scheduledAt,
-                $scheduledEndAt
+                $scheduledEndAt,
+                $lockedJobOrder->id,
+                true
             );
 
             if ($conflict !== null) {
@@ -154,43 +182,6 @@ class JobOrderSchedulingService
             ]);
 
             return $lockedJobOrder->fresh();
-        });
-    }
-
-    /**
-     * Find an accepted, active, or legacy assigned schedule conflict.
-     */
-    private function findConflict(
-        JobOrder $jobOrder,
-        CarbonImmutable $scheduledAt,
-        CarbonImmutable $scheduledEndAt
-    ): ?JobOrder {
-        $candidates = JobOrder::query()
-            ->where('id', '!=', $jobOrder->id)
-            ->where(
-                'selected_technician_id',
-                $jobOrder->selected_technician_id
-            )
-            ->whereIn(
-                'status',
-                JobOrder::BLOCKING_SCHEDULE_STATUSES
-            )
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<', $scheduledEndAt)
-            ->lockForUpdate()
-            ->get();
-
-        return $candidates->first(function (
-            JobOrder $candidate
-        ) use ($scheduledAt): bool {
-            /*
-             * Legacy assigned jobs may not have an end timestamp.
-             * Treat those old records as one-hour schedules.
-             */
-            $candidateEnd = $candidate->scheduled_end_at
-                ?? $candidate->scheduled_at->copy()->addHour();
-
-            return $candidateEnd->greaterThan($scheduledAt);
         });
     }
 }

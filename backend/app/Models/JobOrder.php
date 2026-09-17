@@ -100,6 +100,11 @@ class JobOrder extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function conversation(): HasOne
+    {
+        return $this->hasOne(Conversation::class);
+    }
+
     public function selectedTechnician(): BelongsTo
     {
         return $this->belongsTo(

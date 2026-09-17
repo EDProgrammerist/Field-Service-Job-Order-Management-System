@@ -26,6 +26,7 @@ class TechnicianJobOrderWorkflowTest extends TestCase
         $this->postJson(
             "/api/technician/job-orders/{$jobOrder->id}/accept",
             [
+                'schedule_version' => 1,
                 'remarks' => 'I can attend this schedule.',
             ]
         )
@@ -71,7 +72,9 @@ class TechnicianJobOrderWorkflowTest extends TestCase
         $this->postJson(
             "/api/technician/job-orders/{$jobOrder->id}/reject",
             [
-                'reason' => 'I am unavailable during this period.',
+                'schedule_version' => 1,
+                'reason' =>
+                    'I am unavailable during this period.',
             ]
         )
             ->assertOk()
@@ -119,7 +122,10 @@ class TechnicianJobOrderWorkflowTest extends TestCase
         );
 
         $this->postJson(
-            "/api/technician/job-orders/{$pendingJob->id}/accept"
+            "/api/technician/job-orders/{$pendingJob->id}/accept",
+            [
+                'schedule_version' => 1,
+            ]
         )
             ->assertStatus(409)
             ->assertJsonValidationErrors('scheduled_at');
@@ -205,7 +211,10 @@ class TechnicianJobOrderWorkflowTest extends TestCase
         )->assertForbidden();
 
         $this->postJson(
-            "/api/technician/job-orders/{$jobOrder->id}/accept"
+            "/api/technician/job-orders/{$jobOrder->id}/accept",
+            [
+                'schedule_version' => 1,
+            ]
         )->assertForbidden();
 
         $this->patchJson(
@@ -293,6 +302,7 @@ class TechnicianJobOrderWorkflowTest extends TestCase
         ]);
 
         $scheduledAt ??= now()->addDays(2)->startOfHour();
+
         $scheduledEndAt ??= $scheduledAt
             ->copy()
             ->addHours(2);

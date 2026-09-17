@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use App\Services\TechnicianAvailabilityService;
 
 class DispatcherSchedulingController extends Controller
 {
@@ -42,22 +43,21 @@ class DispatcherSchedulingController extends Controller
             ->with($this->relations())
             ->when(
                 isset($validated['status']),
-                fn ($query) =>
-                    $query->where('status', $validated['status']),
-                fn ($query) =>
-                    $query->whereIn(
-                        'status',
-                        JobOrder::NEEDS_SCHEDULING_STATUSES
-                    )
+                fn($query) =>
+                $query->where('status', $validated['status']),
+                fn($query) =>
+                $query->whereIn(
+                    'status',
+                    JobOrder::NEEDS_SCHEDULING_STATUSES
+                )
             )
             ->orderBy('created_at')
             ->paginate($perPage)
             ->withQueryString();
 
         $jobOrders->through(
-            fn (JobOrder $jobOrder): array =>
-                (new DispatcherJobOrderResource($jobOrder))
-                    ->resolve($request)
+            fn(JobOrder $jobOrder): array => (new DispatcherJobOrderResource($jobOrder))
+                ->resolve($request)
         );
 
         return response()->json([
@@ -116,8 +116,11 @@ class DispatcherSchedulingController extends Controller
      */
     public function availability(
         Request $request,
-        Technician $technician
+        Technician $technician,
+        TechnicianAvailabilityService $availabilityService
     ): JsonResponse {
+        Gate::authorize('viewSchedulingQueue', JobOrder::class);
+
         $validated = $request->validate([
             'from' => [
                 'required',
@@ -133,46 +136,27 @@ class DispatcherSchedulingController extends Controller
         $from = CarbonImmutable::parse($validated['from'])->utc();
         $to = CarbonImmutable::parse($validated['to'])->utc();
 
-        $candidates = JobOrder::query()
-            ->where('selected_technician_id', $technician->id)
-            ->whereIn(
-                'status',
-                JobOrder::BLOCKING_SCHEDULE_STATUSES
-            )
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<', $to)
-            ->orderBy('scheduled_at')
-            ->get();
-
-        $conflicts = $candidates
-            ->filter(function (JobOrder $jobOrder) use ($from): bool {
-                $end = $jobOrder->scheduled_end_at
-                    ?? $jobOrder->scheduled_at
-                        ->copy()
-                        ->addHour();
-
-                return $end->greaterThan($from);
-            })
-            ->values()
-            ->map(function (JobOrder $jobOrder): array {
-                $end = $jobOrder->scheduled_end_at
-                    ?? $jobOrder->scheduled_at
-                        ->copy()
-                        ->addHour();
-
+        $conflicts = $availabilityService
+            ->conflicts($technician, $from, $to)
+            ->map(function (
+                JobOrder $jobOrder
+            ) use ($availabilityService): array {
                 return [
                     'id' => $jobOrder->id,
                     'job_order_number' =>
-                        $jobOrder->job_order_number,
+                    $jobOrder->job_order_number,
                     'title' => $jobOrder->title,
                     'status' => $jobOrder->status,
                     'scheduled_at' =>
-                        $jobOrder->scheduled_at
-                            ->toIso8601String(),
+                    $jobOrder->scheduled_at
+                        ->toIso8601String(),
                     'scheduled_end_at' =>
-                        $end->toIso8601String(),
+                    $availabilityService
+                        ->effectiveEnd($jobOrder)
+                        ->toIso8601String(),
                 ];
-            });
+            })
+            ->values();
 
         return response()->json([
             'message' => 'Technician availability retrieved successfully.',

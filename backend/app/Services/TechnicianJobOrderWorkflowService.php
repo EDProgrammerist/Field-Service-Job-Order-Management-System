@@ -14,19 +14,27 @@ use Illuminate\Validation\ValidationException;
 
 class TechnicianJobOrderWorkflowService
 {
+    public function __construct(
+        private readonly TechnicianAvailabilityService
+            $availabilityService
+    ) {
+    }
+
     public function accept(
         JobOrder $jobOrder,
         User $performedBy,
+        int $scheduleVersion,
         ?string $remarks
     ): JobOrder {
         return DB::transaction(function () use (
             $jobOrder,
             $performedBy,
+            $scheduleVersion,
             $remarks
         ): JobOrder {
             /*
-             * Lock the technician before the job order. Concurrent acceptance
-             * attempts for this technician will therefore run sequentially.
+             * Lock the technician before the job order. Concurrent actions
+             * for the same technician will therefore run sequentially.
              */
             $technician = $this->lockTechnician($performedBy);
 
@@ -51,15 +59,23 @@ class TechnicianJobOrderWorkflowService
                 'Only a request awaiting technician response can be accepted.'
             );
 
+            $this->ensureScheduleVersion(
+                $lockedJobOrder,
+                $scheduleVersion
+            );
+
             $revision = $this->lockCurrentScheduleRevision(
                 $lockedJobOrder
             );
 
             $this->ensureRevisionHasNoResponse($revision);
 
-            $conflict = $this->findConflict(
-                $lockedJobOrder,
-                $technician
+            $conflict = $this->availabilityService->firstConflict(
+                $technician,
+                $revision->scheduled_at,
+                $revision->scheduled_end_at,
+                $lockedJobOrder->id,
+                true
             );
 
             if ($conflict !== null) {
@@ -105,11 +121,13 @@ class TechnicianJobOrderWorkflowService
     public function reject(
         JobOrder $jobOrder,
         User $performedBy,
+        int $scheduleVersion,
         string $reason
     ): JobOrder {
         return DB::transaction(function () use (
             $jobOrder,
             $performedBy,
+            $scheduleVersion,
             $reason
         ): JobOrder {
             $technician = $this->lockTechnician($performedBy);
@@ -124,6 +142,11 @@ class TechnicianJobOrderWorkflowService
                 $lockedJobOrder,
                 'pending_technician_response',
                 'Only a request awaiting technician response can be rejected.'
+            );
+
+            $this->ensureScheduleVersion(
+                $lockedJobOrder,
+                $scheduleVersion
             );
 
             $revision = $this->lockCurrentScheduleRevision(
@@ -198,7 +221,7 @@ class TechnicianJobOrderWorkflowService
                 'in_progress',
                 'technician_started',
                 $performedBy,
-                $remarks ?? 'Technician started the work.',
+                $remarks ?? 'Technician started the work.'
             );
 
             return $lockedJobOrder->fresh();
@@ -305,6 +328,19 @@ class TechnicianJobOrderWorkflowService
         }
     }
 
+    private function ensureScheduleVersion(
+        JobOrder $jobOrder,
+        int $scheduleVersion
+    ): void {
+        if ($jobOrder->schedule_version !== $scheduleVersion) {
+            throw ValidationException::withMessages([
+                'schedule_version' => [
+                    "The schedule changed. Refresh this request and review schedule version {$jobOrder->schedule_version} before responding.",
+                ],
+            ])->status(409);
+        }
+    }
+
     private function lockCurrentScheduleRevision(
         JobOrder $jobOrder
     ): JobOrderScheduleRevision {
@@ -351,38 +387,6 @@ class TechnicianJobOrderWorkflowService
                 ],
             ]);
         }
-    }
-
-    private function findConflict(
-        JobOrder $jobOrder,
-        Technician $technician
-    ): ?JobOrder {
-        $candidates = JobOrder::query()
-            ->where('id', '!=', $jobOrder->id)
-            ->where('selected_technician_id', $technician->id)
-            ->whereIn(
-                'status',
-                JobOrder::BLOCKING_SCHEDULE_STATUSES
-            )
-            ->whereNotNull('scheduled_at')
-            ->where(
-                'scheduled_at',
-                '<',
-                $jobOrder->scheduled_end_at
-            )
-            ->lockForUpdate()
-            ->get();
-
-        return $candidates->first(function (
-            JobOrder $candidate
-        ) use ($jobOrder): bool {
-            $candidateEnd = $candidate->scheduled_end_at
-                ?? $candidate->scheduled_at->copy()->addHour();
-
-            return $candidateEnd->greaterThan(
-                $jobOrder->scheduled_at
-            );
-        });
     }
 
     /**

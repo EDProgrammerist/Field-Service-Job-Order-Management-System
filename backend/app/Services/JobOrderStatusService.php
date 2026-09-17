@@ -13,21 +13,31 @@ use Illuminate\Validation\ValidationException;
 class JobOrderStatusService
 {
     /**
-     * Define valid status transitions.
+     * Administrative transitions only.
+     *
+     * Accepting, rejecting, starting, and completing work remain
+     * exclusive to the selected technician's dedicated endpoints.
      */
-    private const ALLOWED_TRANSITIONS = [
-        'pending_review' => ['created', 'cancelled'],
-        'created' => ['assigned', 'cancelled'],
-        'assigned' => ['created', 'in_progress', 'cancelled'],
-        'in_progress' => ['assigned', 'completed', 'cancelled'],
+    private const ADMIN_TRANSITIONS = [
+        'pending_schedule' => ['cancelled'],
+        'pending_technician_response' => ['cancelled'],
+        'accepted' => ['cancelled'],
+        'technician_rejected' => ['cancelled'],
+        'in_progress' => ['cancelled'],
         'completed' => ['closed'],
+
+        /*
+         * Temporary support for historical rows. These statuses can only
+         * move toward cancellation and cannot re-enter the new workflow.
+         */
+        'pending_review' => ['cancelled'],
+        'created' => ['cancelled'],
+        'assigned' => ['cancelled'],
+
         'closed' => [],
         'cancelled' => [],
     ];
 
-    /**
-     * Change a job order status and record its history.
-     */
     public function transition(
         JobOrder $jobOrder,
         string $newStatus,
@@ -39,66 +49,35 @@ class JobOrderStatusService
             $newStatus,
             $changedBy,
             $remarks
-        ) {
+        ): JobOrderStatusHistory {
+            if ($changedBy->role !== 'admin') {
+                throw new AuthorizationException(
+                    'Only administrators may use the administrative status endpoint.'
+                );
+            }
+
             $lockedJobOrder = JobOrder::query()
                 ->lockForUpdate()
                 ->findOrFail($jobOrder->id);
 
             $currentStatus = $lockedJobOrder->status;
 
-            $activeAssignment = JobOrderAssignment::query()
-                ->where('job_order_id', $lockedJobOrder->id)
-                ->whereNull('unassigned_at')
-                ->lockForUpdate()
-                ->first();
-
-            $this->ensureUserCanChangeStatus(
-                $currentStatus,
-                $newStatus,
-                $changedBy,
-                $activeAssignment
-            );
-
             if ($currentStatus === $newStatus) {
                 throw ValidationException::withMessages([
                     'status' => [
-                        'The job order already has this status.',
+                        "The request is already {$newStatus}.",
                     ],
                 ]);
             }
 
             if (! in_array(
                 $newStatus,
-                self::ALLOWED_TRANSITIONS[$currentStatus] ?? [],
+                self::ADMIN_TRANSITIONS[$currentStatus] ?? [],
                 true
             )) {
                 throw ValidationException::withMessages([
                     'status' => [
-                        "The status cannot change from {$currentStatus} to {$newStatus}.",
-                    ],
-                ]);
-            }
-
-            if ($newStatus === 'assigned' && ! $activeAssignment) {
-                throw ValidationException::withMessages([
-                    'status' => [
-                        'A job order must have an active technician assignment before it can be marked assigned.',
-                    ],
-                ]);
-            }
-
-            if ($newStatus === 'created' && $activeAssignment) {
-                throw ValidationException::withMessages([
-                    'status' => [
-                        'End the active technician assignment before returning the job order to created status.',
-                    ],
-                ]);
-            }
-
-            if ($newStatus === 'cancelled' && $activeAssignment) {
-                throw ValidationException::withMessages([
-                    'status' => [
-                        'End the active technician assignment before cancelling the job order.',
+                        "An administrator cannot change this request from {$currentStatus} to {$newStatus}.",
                     ],
                 ]);
             }
@@ -107,83 +86,46 @@ class JobOrderStatusService
                 'status' => $newStatus,
             ];
 
-            if ($newStatus === 'completed') {
-                $updates['completed_at'] = now();
-            }
-
             if ($newStatus === 'closed') {
                 $updates['closed_at'] = now();
             }
 
             $lockedJobOrder->update($updates);
 
-            if (
-                $activeAssignment
-                && in_array($newStatus, ['completed', 'closed'], true)
-            ) {
-                $activeAssignment->update([
-                    'unassigned_at' => now(),
-                ]);
+            /*
+             * Legacy active assignments are ended when an administrator
+             * cancels the associated request. The records are retained.
+             */
+            if ($newStatus === 'cancelled') {
+                JobOrderAssignment::query()
+                    ->where(
+                        'job_order_id',
+                        $lockedJobOrder->id
+                    )
+                    ->whereNull('unassigned_at')
+                    ->lockForUpdate()
+                    ->update([
+                        'unassigned_at' => now(),
+                    ]);
             }
 
             return JobOrderStatusHistory::create([
                 'job_order_id' => $lockedJobOrder->id,
+                'previous_status' => $currentStatus,
                 'status' => $newStatus,
+                'action' => $newStatus === 'cancelled'
+                    ? 'admin_cancelled'
+                    : 'admin_closed',
                 'changed_by' => $changedBy->id,
-                'remarks' => $remarks,
-            ]);
-        });
-    }
-
-    /**
-     * Ensure the authenticated user may perform the status change.
-     */
-    private function ensureUserCanChangeStatus(
-        string $currentStatus,
-        string $newStatus,
-        User $changedBy,
-        ?JobOrderAssignment $activeAssignment
-    ): void {
-        if (in_array(
-            $changedBy->role,
-            ['admin', 'dispatcher'],
-            true
-        )) {
-            return;
-        }
-
-        if ($changedBy->role !== 'technician') {
-            throw new AuthorizationException(
-                'You are not allowed to change job order statuses.'
-            );
-        }
-
-        $technician = $changedBy->technician;
-
-        $isAssignedToTechnician = $technician
-            && $activeAssignment
-            && $activeAssignment->technician_id === $technician->id;
-
-        if (! $isAssignedToTechnician) {
-            throw new AuthorizationException(
-                'You may only update a job order currently assigned to you.'
-            );
-        }
-
-        $technicianTransitionIsAllowed = (
-            $currentStatus === 'assigned'
-            && $newStatus === 'in_progress'
-        ) || (
-            $currentStatus === 'in_progress'
-            && $newStatus === 'completed'
-        );
-
-        if (! $technicianTransitionIsAllowed) {
-            throw ValidationException::withMessages([
-                'status' => [
-                    'Technicians may only start or complete their own active job orders.',
+                'remarks' => $remarks ?? (
+                    $newStatus === 'cancelled'
+                        ? 'Administrator cancelled the request.'
+                        : 'Administrator closed the completed request.'
+                ),
+                'metadata' => [
+                    'administrative_action' => true,
                 ],
             ]);
-        }
+        });
     }
 }

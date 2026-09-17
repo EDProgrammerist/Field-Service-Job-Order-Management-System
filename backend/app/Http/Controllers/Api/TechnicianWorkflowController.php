@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Technician\AcceptScheduleRequest;
 use App\Http\Requests\Technician\RejectJobOrderRequest;
 use App\Http\Requests\Technician\TechnicianJobActionRequest;
 use App\Http\Resources\TechnicianJobOrderResource;
 use App\Models\JobOrder;
+use App\Services\TechnicianAvailabilityService;
 use App\Services\TechnicianJobOrderWorkflowService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -41,12 +43,18 @@ class TechnicianWorkflowController extends Controller
         ]);
 
         $jobOrders = JobOrder::query()
-            ->where('selected_technician_id', $technician->id)
+            ->where(
+                'selected_technician_id',
+                $technician->id
+            )
             ->with($this->relations())
             ->when(
                 isset($validated['status']),
                 fn ($query) =>
-                    $query->where('status', $validated['status'])
+                    $query->where(
+                        'status',
+                        $validated['status']
+                    )
             )
             ->orderByRaw('scheduled_at IS NULL')
             ->orderBy('scheduled_at')
@@ -61,7 +69,8 @@ class TechnicianWorkflowController extends Controller
         );
 
         return response()->json([
-            'message' => 'Technician job orders retrieved successfully.',
+            'message' =>
+                'Technician job orders retrieved successfully.',
             'data' => $jobOrders,
         ]);
     }
@@ -82,7 +91,7 @@ class TechnicianWorkflowController extends Controller
     }
 
     public function accept(
-        TechnicianJobActionRequest $request,
+        AcceptScheduleRequest $request,
         JobOrder $jobOrder,
         TechnicianJobOrderWorkflowService $service
     ): JsonResponse {
@@ -91,6 +100,7 @@ class TechnicianWorkflowController extends Controller
         $jobOrder = $service->accept(
             $jobOrder,
             $request->user(),
+            $request->integer('schedule_version'),
             $request->input('remarks')
         );
 
@@ -113,6 +123,7 @@ class TechnicianWorkflowController extends Controller
         $jobOrder = $service->reject(
             $jobOrder,
             $request->user(),
+            $request->integer('schedule_version'),
             $request->string('reason')->toString()
         );
 
@@ -169,8 +180,10 @@ class TechnicianWorkflowController extends Controller
         );
     }
 
-    public function schedule(Request $request): JsonResponse
-    {
+    public function schedule(
+        Request $request,
+        TechnicianAvailabilityService $availabilityService
+    ): JsonResponse {
         $technician = $request->user()->technician;
 
         if (! $technician) {
@@ -195,39 +208,32 @@ class TechnicianWorkflowController extends Controller
         ]);
 
         $from = isset($validated['from'])
-            ? CarbonImmutable::parse($validated['from'])->utc()
-            : CarbonImmutable::now()->utc()->startOfDay();
+            ? CarbonImmutable::parse(
+                $validated['from']
+            )->utc()
+            : CarbonImmutable::now()
+                ->utc()
+                ->startOfDay();
 
         $to = isset($validated['to'])
-            ? CarbonImmutable::parse($validated['to'])->utc()
+            ? CarbonImmutable::parse(
+                $validated['to']
+            )->utc()
             : $from->addDays(30);
 
-        $jobOrders = JobOrder::query()
-            ->where('selected_technician_id', $technician->id)
-            ->whereIn(
-                'status',
-                JobOrder::TECHNICIAN_SCHEDULE_STATUSES
-            )
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<', $to)
-            ->with($this->relations())
-            ->orderBy('scheduled_at')
-            ->get()
-            ->filter(function (JobOrder $jobOrder) use ($from): bool {
-                $end = $jobOrder->scheduled_end_at
-                    ?? $jobOrder->scheduled_at->copy()->addHour();
-
-                return $end->greaterThan($from);
-            })
-            ->values()
+        $jobOrders = $availabilityService
+            ->conflicts($technician, $from, $to)
+            ->load($this->relations())
             ->map(
                 fn (JobOrder $jobOrder): array =>
                     (new TechnicianJobOrderResource($jobOrder))
                         ->resolve($request)
-            );
+            )
+            ->values();
 
         return response()->json([
-            'message' => 'Technician schedule retrieved successfully.',
+            'message' =>
+                'Technician schedule retrieved successfully.',
             'data' => [
                 'from' => $from->toIso8601String(),
                 'to' => $to->toIso8601String(),
@@ -248,7 +254,8 @@ class TechnicianWorkflowController extends Controller
             ->get();
 
         return response()->json([
-            'message' => 'Job order history retrieved successfully.',
+            'message' =>
+                'Job order history retrieved successfully.',
             'data' => $history,
         ]);
     }

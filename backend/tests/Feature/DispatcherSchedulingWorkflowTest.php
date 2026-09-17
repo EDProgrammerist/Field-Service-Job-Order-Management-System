@@ -31,9 +31,9 @@ class DispatcherSchedulingWorkflowTest extends TestCase
             "/api/dispatcher/job-orders/{$jobOrder->id}/schedule",
             [
                 'scheduled_at' =>
-                    $scheduledAt->toIso8601String(),
+                $scheduledAt->toIso8601String(),
                 'scheduled_end_at' =>
-                    $scheduledEndAt->toIso8601String(),
+                $scheduledEndAt->toIso8601String(),
                 'remarks' => 'Initial official schedule.',
             ]
         );
@@ -129,9 +129,9 @@ class DispatcherSchedulingWorkflowTest extends TestCase
             "/api/dispatcher/job-orders/{$jobOrder->id}/schedule",
             [
                 'scheduled_at' =>
-                    $newStart->toIso8601String(),
+                $newStart->toIso8601String(),
                 'scheduled_end_at' =>
-                    $newEnd->toIso8601String(),
+                $newEnd->toIso8601String(),
                 'remarks' => 'Rescheduled after rejection.',
             ]
         )
@@ -171,7 +171,7 @@ class DispatcherSchedulingWorkflowTest extends TestCase
             [
                 'scheduled_at' => $start->copy()->addHour(),
                 'scheduled_end_at' =>
-                    $start->copy()->addHours(3),
+                $start->copy()->addHours(3),
                 'schedule_version' => 1,
             ]
         );
@@ -186,9 +186,9 @@ class DispatcherSchedulingWorkflowTest extends TestCase
             [
                 'scheduled_at' => $start->toIso8601String(),
                 'scheduled_end_at' =>
-                    $start->copy()
-                        ->addHours(2)
-                        ->toIso8601String(),
+                $start->copy()
+                    ->addHours(2)
+                    ->toIso8601String(),
             ]
         )
             ->assertStatus(409)
@@ -213,7 +213,7 @@ class DispatcherSchedulingWorkflowTest extends TestCase
             [
                 'scheduled_at' => $start,
                 'scheduled_end_at' =>
-                    $start->copy()->addHours(2),
+                $start->copy()->addHours(2),
                 'schedule_version' => 1,
             ]
         );
@@ -257,7 +257,7 @@ class DispatcherSchedulingWorkflowTest extends TestCase
             [
                 'technician_id' => $replacementTechnician->id,
             ]
-        )->assertForbidden();
+        )->assertNotFound();
 
         $this->putJson(
             "/api/job-orders/{$jobOrder->id}",
@@ -290,9 +290,9 @@ class DispatcherSchedulingWorkflowTest extends TestCase
             [
                 'scheduled_at' => $start->toIso8601String(),
                 'scheduled_end_at' =>
-                    $start->copy()
-                        ->addHour()
-                        ->toIso8601String(),
+                $start->copy()
+                    ->addHour()
+                    ->toIso8601String(),
             ]
         )->assertForbidden();
     }
@@ -316,12 +316,12 @@ class DispatcherSchedulingWorkflowTest extends TestCase
 
         return $user->technician()->create([
             'employee_number' =>
-                'TECH-'.str_pad(
-                    (string) $user->id,
-                    5,
-                    '0',
-                    STR_PAD_LEFT
-                ),
+            'TECH-' . str_pad(
+                (string) $user->id,
+                5,
+                '0',
+                STR_PAD_LEFT
+            ),
             'phone' => '09170000002',
             'specialization' => 'General repair',
             'is_active' => true,
@@ -351,12 +351,12 @@ class DispatcherSchedulingWorkflowTest extends TestCase
 
         return JobOrder::create([
             'job_order_number' =>
-                'JO-TEST-'.str_pad(
-                    (string) $customerUser->id,
-                    6,
-                    '0',
-                    STR_PAD_LEFT
-                ),
+            'JO-TEST-' . str_pad(
+                (string) $customerUser->id,
+                6,
+                '0',
+                STR_PAD_LEFT
+            ),
             'customer_id' => $customer->id,
             'selected_technician_id' => $technician->id,
             'created_by' => $customerUser->id,

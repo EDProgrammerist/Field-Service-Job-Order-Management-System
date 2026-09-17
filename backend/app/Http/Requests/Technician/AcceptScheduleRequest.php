@@ -4,7 +4,7 @@ namespace App\Http\Requests\Technician;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RejectJobOrderRequest extends FormRequest
+class AcceptScheduleRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -22,8 +22,8 @@ class RejectJobOrderRequest extends FormRequest
                 'integer',
                 'min:1',
             ],
-            'reason' => [
-                'required',
+            'remarks' => [
+                'nullable',
                 'string',
                 'max:2000',
             ],
@@ -38,8 +38,6 @@ class RejectJobOrderRequest extends FormRequest
         return [
             'schedule_version.required' =>
                 'The schedule version is required. Refresh the request before responding.',
-            'reason.required' =>
-                'Please provide a reason for rejecting the schedule.',
         ];
     }
 }

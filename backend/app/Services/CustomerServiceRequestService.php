@@ -13,7 +13,10 @@ use Illuminate\Validation\ValidationException;
 class CustomerServiceRequestService
 {
     public function __construct(
-        private readonly JobOrderNumberGenerator $jobOrderNumberGenerator
+        private readonly JobOrderNumberGenerator
+            $jobOrderNumberGenerator,
+        private readonly JobOrderConversationService
+            $conversationService
     ) {
     }
 
@@ -36,10 +39,6 @@ class CustomerServiceRequestService
                 ->lockForUpdate()
                 ->find($data['selected_technician_id']);
 
-            /*
-             * Validation already checks this, but it is checked again while
-             * holding a database lock to prevent a concurrent deactivation.
-             */
             if (! $technician || ! $technician->is_active) {
                 throw ValidationException::withMessages([
                     'selected_technician_id' => [
@@ -50,13 +49,16 @@ class CustomerServiceRequestService
 
             $jobOrder = JobOrder::create([
                 'job_order_number' =>
-                    $this->jobOrderNumberGenerator->generate(),
+                    $this
+                        ->jobOrderNumberGenerator
+                        ->generate(),
                 'customer_id' => $customer->id,
                 'selected_technician_id' => $technician->id,
                 'created_by' => $createdBy->id,
                 'title' => $data['title'],
                 'description' => $data['description'],
-                'service_address' => $data['service_address'],
+                'service_address' =>
+                    $data['service_address'],
                 'priority' => 'normal',
                 'status' => 'pending_schedule',
                 'schedule_version' => 0,
@@ -71,9 +73,13 @@ class CustomerServiceRequestService
                 'remarks' =>
                     'Customer submitted the service request and selected a technician.',
                 'metadata' => [
-                    'selected_technician_id' => $technician->id,
+                    'selected_technician_id' =>
+                        $technician->id,
                 ],
             ]);
+
+            $this->conversationService
+                ->ensureForJobOrder($jobOrder);
 
             return $jobOrder;
         });

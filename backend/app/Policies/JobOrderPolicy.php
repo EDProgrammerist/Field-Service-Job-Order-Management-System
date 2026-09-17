@@ -59,6 +59,23 @@ class JobOrderPolicy
         return $this->isSelectedTechnician($user, $jobOrder);
     }
 
+    public function useConversation(
+        User $user,
+        JobOrder $jobOrder
+    ): bool {
+        if ($user->role === 'customer') {
+            $customerId = $user->customer?->id;
+
+            return $customerId !== null
+                && $jobOrder->customer_id === $customerId;
+        }
+
+        return $this->isSelectedTechnician(
+            $user,
+            $jobOrder
+        );
+    }
+
     private function isSelectedTechnician(
         User $user,
         JobOrder $jobOrder
