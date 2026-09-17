@@ -1,32 +1,18 @@
-import {
-  ClipboardList,
-  Plus,
-} from "lucide-react";
-import { Link } from "react-router";
+import { ClipboardList } from "lucide-react";
 
 import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
+import { DispatcherJobOrderList } from "@/components/features/dispatcher/dispatcher-job-order-list";
 import { DispatcherPage } from "@/components/features/dispatcher/dispatcher-page";
-import { JobOrderList } from "@/components/features/job-orders/job-order-list";
-import { Button } from "@/components/ui/button";
 
 export default function DispatcherJobOrdersPage() {
   return (
     <DashboardShell>
       <DispatcherPage
-        action={
-          <Button
-            render={<Link to="/dispatcher/job-orders/create" />}
-          >
-            <Plus aria-hidden={true} />
-            Create job order
-          </Button>
-        }
-        description="Review requests, assign technicians, and monitor service progress."
-        hideFeatureHeader
+        description="Review requests that need scheduling, reschedule rejected requests, and monitor technician responses."
         icon={ClipboardList}
-        title="Job orders"
+        title="Scheduling queue"
       >
-        <JobOrderList />
+        <DispatcherJobOrderList />
       </DispatcherPage>
     </DashboardShell>
   );

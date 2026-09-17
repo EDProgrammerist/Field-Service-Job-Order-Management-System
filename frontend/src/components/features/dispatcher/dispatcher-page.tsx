@@ -18,6 +18,7 @@ interface DispatcherPageProps extends DispatcherSurfaceProps {
   description: string;
   icon: LucideIcon;
   backHref?: string;
+  backLabel?: string;
   action?: ReactNode;
 }
 
@@ -43,6 +44,7 @@ export function DispatcherPage({
   description,
   icon: Icon,
   backHref,
+  backLabel = "Back to job orders",
   action,
   children,
   hideFeatureHeader = false,
@@ -77,7 +79,7 @@ export function DispatcherPage({
                 variant="outline"
               >
                 <ArrowLeft aria-hidden={true} />
-                Back to job orders
+                {backLabel}
               </Button>
             ) : null}
 

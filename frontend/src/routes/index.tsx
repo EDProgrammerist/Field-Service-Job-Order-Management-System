@@ -14,9 +14,7 @@ import CustomerRegisterPage from "@/pages/customer/register";
 import CustomerNewServiceRequestPage from "@/pages/customer/service-requests/new";
 import UnauthorizedPage from "@/pages/auth/unauthorized";
 import DispatcherDashboardPage from "@/pages/dispatcher/dashboard";
-import DispatcherCreateJobOrderPage from "@/pages/dispatcher/job-orders/create";
 import DispatcherJobOrderDetailsPage from "@/pages/dispatcher/job-orders/details";
-import DispatcherEditJobOrderPage from "@/pages/dispatcher/job-orders/edit";
 import DispatcherJobOrdersPage from "@/pages/dispatcher/job-orders";
 import DispatcherTechniciansPage from "@/pages/dispatcher/technicians";
 import NotFoundPage from "@/pages/not-found";
@@ -25,6 +23,7 @@ import TechnicianJobOrderDetailsPage from "@/pages/technician/my-jobs/details";
 import TechnicianMyJobsPage from "@/pages/technician/my-jobs";
 import CustomerServiceRequestsPage from "@/pages/customer/service-requests";
 import CustomerServiceRequestDetailsPage from "@/pages/customer/service-requests/details";
+import DispatcherScheduleJobOrderPage from "@/pages/dispatcher/job-orders/schedule";
 import HomePage from "@/pages/home";
 
 export function AppRoutes() {
@@ -158,18 +157,18 @@ export function AppRoutes() {
         }
       />
       <Route
-        path="/dispatcher/job-orders/create"
+        path="/dispatcher/job-orders"
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
-            <DispatcherCreateJobOrderPage />
+            <DispatcherJobOrdersPage />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/dispatcher/job-orders/:jobOrderId/edit"
+        path="/dispatcher/job-orders/:jobOrderId/schedule"
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
-            <DispatcherEditJobOrderPage />
+            <DispatcherScheduleJobOrderPage />
           </ProtectedRoute>
         }
       />

@@ -1,8 +1,9 @@
+import { ClipboardList } from "lucide-react";
 import { useParams } from "react-router";
 
 import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
-import { DispatcherSurface } from "@/components/features/dispatcher/dispatcher-page";
-import { JobOrderDetails } from "@/components/features/job-orders/job-order-details";
+import { DispatcherJobOrderDetails } from "@/components/features/dispatcher/dispatcher-job-order-details";
+import { DispatcherPage } from "@/components/features/dispatcher/dispatcher-page";
 
 export default function DispatcherJobOrderDetailsPage() {
   const { jobOrderId } = useParams();
@@ -17,13 +18,16 @@ export default function DispatcherJobOrderDetailsPage() {
 
   return (
     <DashboardShell>
-      <DispatcherSurface>
-        <JobOrderDetails
+      <DispatcherPage
+        backHref="/dispatcher/job-orders"
+        description="Review the service request, customer-selected technician, and official scheduling history."
+        icon={ClipboardList}
+        title="Scheduling request"
+      >
+        <DispatcherJobOrderDetails
           jobOrderId={parsedJobOrderId}
-          listPath="/dispatcher/job-orders"
-          editPath={`/dispatcher/job-orders/${parsedJobOrderId}/edit`}
         />
-      </DispatcherSurface>
+      </DispatcherPage>
     </DashboardShell>
   );
 }

@@ -155,32 +155,58 @@ export function CustomerServiceRequestDetails({
               </p>
             </div>
 
-            <div>
-              <p className="text-muted-foreground">
-                Scheduled date and time
-              </p>
-              <p className="mt-1">{formatDate(request.scheduled_at)}</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-muted-foreground">
+                  Scheduled start
+                </p>
+                <p className="mt-1">
+                  {formatDate(request.scheduled_at)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">
+                  Scheduled end
+                </p>
+                <p className="mt-1">
+                  {formatDate(request.scheduled_end_at)}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Assigned technician</CardTitle>
+            <CardTitle>Selected technician</CardTitle>
           </CardHeader>
+
           <CardContent className="space-y-2 text-sm">
-            {request.active_assignment ? (
+            {request.selected_technician ? (
               <>
                 <p className="font-medium">
-                  {request.active_assignment.technician.user.name}
+                  {request.selected_technician.name}
                 </p>
+
                 <p className="text-muted-foreground">
-                  {request.active_assignment.technician.employee_number}
+                  {request.selected_technician.employee_number}
                 </p>
+
+                <p>
+                  {request.selected_technician.specialization ??
+                    "General field service"}
+                </p>
+
+                {request.selected_technician.introduction ? (
+                  <p className="pt-2 leading-6 text-muted-foreground">
+                    {request.selected_technician.introduction}
+                  </p>
+                ) : null}
               </>
             ) : (
               <p className="text-muted-foreground">
-                A technician has not been assigned yet.
+                The selected technician profile is unavailable.
               </p>
             )}
           </CardContent>

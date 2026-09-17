@@ -56,13 +56,29 @@ interface StatusOverviewItem {
 }
 
 const statusClassNames: Record<JobOrderStatus, string> = {
-  pending_review: "border-amber-200 bg-amber-50 text-amber-700",
-  created: "border-slate-300 bg-slate-100 text-slate-700",
-  assigned: "border-blue-200 bg-blue-50 text-blue-700",
-  in_progress: "border-amber-200 bg-amber-50 text-amber-700",
-  completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  closed: "border-violet-200 bg-violet-50 text-violet-700",
-  cancelled: "border-red-200 bg-red-50 text-red-700",
+  pending_schedule:
+    "border-amber-200 bg-amber-50 text-amber-700",
+  pending_technician_response:
+    "border-blue-200 bg-blue-50 text-blue-700",
+  accepted:
+    "border-emerald-200 bg-emerald-50 text-emerald-700",
+  technician_rejected:
+    "border-red-200 bg-red-50 text-red-700",
+  in_progress:
+    "border-amber-200 bg-amber-50 text-amber-700",
+  completed:
+    "border-emerald-200 bg-emerald-50 text-emerald-700",
+  closed:
+    "border-violet-200 bg-violet-50 text-violet-700",
+  cancelled:
+    "border-red-200 bg-red-50 text-red-700",
+
+  pending_review:
+    "border-amber-200 bg-amber-50 text-amber-700",
+  created:
+    "border-slate-300 bg-slate-100 text-slate-700",
+  assigned:
+    "border-blue-200 bg-blue-50 text-blue-700",
 };
 
 const priorityClassNames: Record<JobOrderPriority, string> = {

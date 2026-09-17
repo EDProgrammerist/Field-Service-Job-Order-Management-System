@@ -2,7 +2,6 @@ import {
   ClipboardList,
   FilePlus2,
   LayoutDashboard,
-  PlusCircle,
   ShieldCheck,
   UsersRound,
   Wrench,
@@ -154,17 +153,10 @@ export const dashboardRoleConfigs: Record<
         label: "Operations",
         items: [
           {
-            label: "Job Orders",
+            label: "Scheduling Queue",
             href: "/dispatcher/job-orders",
             icon: ClipboardList,
             matchNested: true,
-            excludedPaths: ["/dispatcher/job-orders/create"],
-          },
-          {
-            label: "Create Job Order",
-            href: "/dispatcher/job-orders/create",
-            icon: PlusCircle,
-            exact: true,
           },
         ],
       },
@@ -183,22 +175,25 @@ export const dashboardRoleConfigs: Record<
     notifications: [
       {
         id: 1,
-        title: "Unassigned work queue",
-        description: "Job orders are waiting for assignment.",
+        title: "Scheduling queue",
+        description:
+          "Review requests that need an official schedule.",
         icon: ClipboardList,
         read: false,
       },
       {
         id: 2,
-        title: "Technician availability",
-        description: "Review available technicians before assigning work.",
+        title: "Technician responses",
+        description:
+          "Monitor schedules awaiting technician approval.",
         icon: UsersRound,
         read: false,
       },
       {
         id: 3,
-        title: "Active field work",
-        description: "Monitor jobs currently in progress.",
+        title: "Rejected schedules",
+        description:
+          "Reschedule requests rejected by technicians.",
         icon: Wrench,
         read: true,
       },
@@ -401,34 +396,27 @@ export function getDashboardPageInformation(
       };
     }
 
-    if (pathname === "/dispatcher/job-orders/create") {
-      return {
-        eyebrow: "Operations",
-        title: "Create Job Order",
-      };
-    }
-
     if (
       pathname.startsWith("/dispatcher/job-orders/") &&
-      pathname.endsWith("/edit")
+      pathname.endsWith("/schedule")
     ) {
       return {
         eyebrow: "Operations",
-        title: "Edit Job Order",
+        title: "Official Schedule",
       };
     }
 
     if (pathname.startsWith("/dispatcher/job-orders/")) {
       return {
         eyebrow: "Operations",
-        title: "Job Order Details",
+        title: "Scheduling Request",
       };
     }
 
     if (pathname === "/dispatcher/job-orders") {
       return {
         eyebrow: "Operations",
-        title: "Job Orders",
+        title: "Scheduling Queue",
       };
     }
 

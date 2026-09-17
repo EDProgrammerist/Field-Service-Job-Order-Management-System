@@ -1,38 +1,64 @@
-import { useState, type FormEvent } from "react";
+import {
+  useState,
+  type FormEvent,
+} from "react";
 import { CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/auth-context";
 import { getApiErrorDetails } from "@/lib/api-errors";
 import { updateJobOrderStatus } from "@/services/job-orders";
-import type { JobOrder, JobOrderStatus } from "@/types/job-order";
+import type {
+  JobOrder,
+  JobOrderStatus,
+} from "@/types/job-order";
 
 interface JobOrderStatusPanelProps {
   jobOrder: JobOrder;
-  onStatusChanged: (updatedJobOrder: JobOrder) => void | Promise<void>;
+  onStatusChanged: (
+    updatedJobOrder: JobOrder,
+  ) => void | Promise<void>;
 }
 
-const allowedTransitions: Record<JobOrderStatus, JobOrderStatus[]> = {
-  pending_review: ["created", "cancelled"],
-  created: ["assigned", "cancelled"],
-  assigned: ["created", "in_progress", "cancelled"],
-  in_progress: ["assigned", "completed", "cancelled"],
+const allowedTransitions: Record<
+  JobOrderStatus,
+  JobOrderStatus[]
+> = {
+  pending_schedule: ["cancelled"],
+  pending_technician_response: ["cancelled"],
+  accepted: ["cancelled"],
+  technician_rejected: ["cancelled"],
+  in_progress: ["cancelled"],
   completed: ["closed"],
   closed: [],
   cancelled: [],
+
+  pending_review: ["cancelled"],
+  created: ["cancelled"],
+  assigned: ["cancelled"],
 };
 
 const statusLabels: Record<JobOrderStatus, string> = {
-  pending_review: "Pending review",
-  created: "Created",
-  assigned: "Assigned",
-  in_progress: "In Progress",
+  pending_schedule: "Pending schedule",
+  pending_technician_response: "Awaiting technician",
+  accepted: "Accepted",
+  technician_rejected: "Schedule rejected",
+  in_progress: "In progress",
   completed: "Completed",
   closed: "Closed",
   cancelled: "Cancelled",
+
+  pending_review: "Pending review",
+  created: "Created",
+  assigned: "Assigned",
 };
 
 export function JobOrderStatusPanel({
@@ -41,25 +67,24 @@ export function JobOrderStatusPanel({
 }: JobOrderStatusPanelProps) {
   const { user } = useAuth();
 
-  const [nextStatus, setNextStatus] = useState<JobOrderStatus | "">("");
+  const [nextStatus, setNextStatus] =
+    useState<JobOrderStatus | "">("");
   const [remarks, setRemarks] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<
+    Record<string, string>
+  >({});
   const [submitError, setSubmitError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allAvailableStatuses = allowedTransitions[jobOrder.status];
-
   const availableStatuses =
-    user?.role === "technician"
-      ? allAvailableStatuses.filter(
-          (status) =>
-            (jobOrder.status === "assigned" && status === "in_progress") ||
-            (jobOrder.status === "in_progress" && status === "completed"),
-        )
-      : allAvailableStatuses;
+    user?.role === "admin"
+      ? allowedTransitions[jobOrder.status]
+      : [];
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
 
     if (!nextStatus) {
@@ -74,10 +99,13 @@ export function JobOrderStatusPanel({
     setIsSubmitting(true);
 
     try {
-      const response = await updateJobOrderStatus(jobOrder.id, {
-        status: nextStatus,
-        remarks: remarks.trim() || null,
-      });
+      const response = await updateJobOrderStatus(
+        jobOrder.id,
+        {
+          status: nextStatus,
+          remarks: remarks.trim() || null,
+        },
+      );
 
       setSuccessMessage(response.message);
       setNextStatus("");
@@ -104,11 +132,15 @@ export function JobOrderStatusPanel({
         <CardHeader>
           <CardTitle>Update status</CardTitle>
         </CardHeader>
+
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            {jobOrder.status === "closed" || jobOrder.status === "cancelled"
-              ? `This job order is ${statusLabels[jobOrder.status].toLowerCase()} and cannot be changed further.`
-              : "No status changes are available for your account."}
+            {jobOrder.status === "closed" ||
+            jobOrder.status === "cancelled"
+              ? `This job order is ${statusLabels[
+                  jobOrder.status
+                ].toLowerCase()} and cannot be changed further.`
+              : "No administrative status changes are available for this account or request."}
           </p>
         </CardContent>
       </Card>
@@ -122,7 +154,10 @@ export function JobOrderStatusPanel({
       </CardHeader>
 
       <CardContent>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form
+          className="space-y-4"
+          onSubmit={handleSubmit}
+        >
           {submitError ? (
             <p
               className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -142,23 +177,35 @@ export function JobOrderStatusPanel({
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="job-order-next-status">New status</Label>
+            <Label htmlFor="job-order-next-status">
+              New status
+            </Label>
 
             <select
               id="job-order-next-status"
               value={nextStatus}
               disabled={isSubmitting}
               onChange={(event) => {
-                setNextStatus(event.target.value as JobOrderStatus);
+                setNextStatus(
+                  event.target.value as JobOrderStatus,
+                );
+
                 setFieldErrors((currentErrors) => {
-                  const remainingErrors = { ...currentErrors };
+                  const remainingErrors = {
+                    ...currentErrors,
+                  };
+
                   delete remainingErrors.status;
+
                   return remainingErrors;
                 });
               }}
               className="flex h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
             >
-              <option value="">Select the next status</option>
+              <option value="">
+                Select the next status
+              </option>
+
               {availableStatuses.map((status) => (
                 <option key={status} value={status}>
                   {statusLabels[status]}
@@ -176,21 +223,31 @@ export function JobOrderStatusPanel({
           <div className="space-y-2">
             <Label htmlFor="job-order-status-remarks">
               Remarks
-              <span className="ml-1 text-muted-foreground">(optional)</span>
+              <span className="ml-1 text-muted-foreground">
+                (optional)
+              </span>
             </Label>
+
             <Textarea
               id="job-order-status-remarks"
               rows={3}
               value={remarks}
               disabled={isSubmitting}
               placeholder="Add a note explaining this status change"
-              onChange={(event) => setRemarks(event.target.value)}
+              onChange={(event) =>
+                setRemarks(event.target.value)
+              }
             />
           </div>
 
-          <Button type="submit" disabled={isSubmitting || !nextStatus}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !nextStatus}
+          >
             <CheckCircle2 />
-            {isSubmitting ? "Updating..." : "Update status"}
+            {isSubmitting
+              ? "Updating..."
+              : "Update status"}
           </Button>
         </form>
       </CardContent>

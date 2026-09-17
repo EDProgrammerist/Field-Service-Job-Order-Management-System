@@ -1,11 +1,11 @@
-import { Pencil } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { useParams } from "react-router";
 
 import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { DispatcherPage } from "@/components/features/dispatcher/dispatcher-page";
-import { JobOrderForm } from "@/components/features/job-orders/job-order-form";
+import { DispatcherScheduleForm } from "@/components/features/dispatcher/dispatcher-schedule-form";
 
-export default function DispatcherEditJobOrderPage() {
+export default function DispatcherScheduleJobOrderPage() {
   const { jobOrderId } = useParams();
   const parsedJobOrderId = Number(jobOrderId);
 
@@ -20,13 +20,13 @@ export default function DispatcherEditJobOrderPage() {
     <DashboardShell>
       <DispatcherPage
         backHref={`/dispatcher/job-orders/${parsedJobOrderId}`}
-        description="Update the customer, service information, priority, or schedule."
-        icon={Pencil}
-        title="Edit job order"
+        backLabel="Back to request"
+        description="Check the selected technician's availability, then assign the official service start and end time."
+        icon={CalendarClock}
+        title="Official schedule"
       >
-        <JobOrderForm
+        <DispatcherScheduleForm
           jobOrderId={parsedJobOrderId}
-          listPath="/dispatcher/job-orders"
         />
       </DispatcherPage>
     </DashboardShell>

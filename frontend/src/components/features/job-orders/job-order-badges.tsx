@@ -13,13 +13,18 @@ interface JobOrderPriorityBadgeProps {
 }
 
 const statusLabels: Record<JobOrderStatus, string> = {
-  pending_review: "Pending review",
-  created: "Created",
-  assigned: "Assigned",
+  pending_schedule: "Pending schedule",
+  pending_technician_response: "Awaiting technician",
+  accepted: "Accepted",
+  technician_rejected: "Schedule rejected",
   in_progress: "In progress",
   completed: "Completed",
   closed: "Closed",
   cancelled: "Cancelled",
+
+  pending_review: "Pending review",
+  created: "Created",
+  assigned: "Assigned",
 };
 
 const priorityLabels: Record<JobOrderPriority, string> = {
@@ -30,15 +35,25 @@ const priorityLabels: Record<JobOrderPriority, string> = {
 };
 
 function statusVariant(status: JobOrderStatus) {
-  if (status === "pending_review") {
+  if (
+    status === "pending_schedule" ||
+    status === "pending_review"
+  ) {
     return "outline";
   }
 
-  if (status === "completed" || status === "closed") {
+  if (
+    status === "pending_technician_response" ||
+    status === "completed" ||
+    status === "closed"
+  ) {
     return "secondary";
   }
 
-  if (status === "cancelled") {
+  if (
+    status === "technician_rejected" ||
+    status === "cancelled"
+  ) {
     return "destructive";
   }
 
@@ -60,7 +75,11 @@ function priorityVariant(priority: JobOrderPriority) {
 export function JobOrderStatusBadge({
   status,
 }: JobOrderStatusBadgeProps) {
-  return <Badge variant={statusVariant(status)}>{statusLabels[status]}</Badge>;
+  return (
+    <Badge variant={statusVariant(status)}>
+      {statusLabels[status]}
+    </Badge>
+  );
 }
 
 export function JobOrderPriorityBadge({
