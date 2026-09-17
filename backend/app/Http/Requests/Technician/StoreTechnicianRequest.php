@@ -36,7 +36,10 @@ class StoreTechnicianRequest extends FormRequest
                 Rule::unique('technicians', 'employee_number'),
             ],
             'phone' => ['nullable', 'string', 'max:30'],
+            'introduction' => ['nullable', 'string', 'max:2000'],
             'specialization' => ['nullable', 'string', 'max:255'],
+            'qualifications' => ['nullable', 'string', 'max:3000'],
+            'availability_notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
