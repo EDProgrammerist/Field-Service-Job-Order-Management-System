@@ -105,6 +105,54 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@layer components {
+  /*
+   * Dispatcher presentation boundary.
+   * These rules do not affect admin because admin pages are not rendered
+   * inside .dispatcher-page.
+   */
+  .dispatcher-page [data-slot="card"] {
+    padding-block: 0;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--background);
+    box-shadow: none;
+  }
+
+  .dispatcher-page [data-slot="card-header"] {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+  }
+
+  .dispatcher-page [data-slot="card-content"]:not(.p-0) {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .dispatcher-page .dispatcher-page-body > form > section {
+    border-radius: 0;
+    background: var(--background);
+    box-shadow: none;
+  }
+
+  .dispatcher-page .dispatcher-page-body article {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /*
+   * JobOrderList and TechnicianManagement already contain their own
+   * headings. Hide those only when DispatcherPage supplies the new heading.
+   */
+  .dispatcher-page--hide-feature-header
+    .dispatcher-page-body
+    > section
+    > div:first-child {
+    display: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
