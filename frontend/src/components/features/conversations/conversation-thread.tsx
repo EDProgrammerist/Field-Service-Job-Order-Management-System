@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type FormEvent,
 } from "react";
@@ -9,7 +10,7 @@ import {
   RefreshCw,
   Send,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import { JobOrderStatusBadge } from "@/components/features/job-orders/job-order-badges";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/auth-context";
 import { getApiErrorDetails } from "@/lib/api-errors";
+import { getMessagingUnavailableMessage } from "@/lib/conversation-errors";
 import {
+  getConversation,
   getConversationMessages,
   getJobOrderConversation,
   markConversationRead,
@@ -33,6 +36,7 @@ import {
 import type {
   Conversation,
   ConversationMessage,
+  ConversationMessagingState,
 } from "@/types/conversation";
 
 interface ConversationThreadProps {
@@ -40,6 +44,7 @@ interface ConversationThreadProps {
 }
 
 const PAGE_SIZE = 50;
+const REFRESH_INTERVAL_MS = 20_000;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -53,10 +58,7 @@ function mergeMessages(
   incoming: ConversationMessage[],
 ) {
   const messagesById = new Map(
-    current.map((message) => [
-      message.id,
-      message,
-    ]),
+    current.map((message) => [message.id, message]),
   );
 
   for (const message of incoming) {
@@ -68,28 +70,69 @@ function mergeMessages(
   );
 }
 
+function getMessagingStatus(
+  state: ConversationMessagingState,
+) {
+  switch (state) {
+    case "paused":
+      return {
+        title: "Messaging paused",
+        description:
+          "The technician rejected the schedule. You can read past messages; messaging resumes in this same conversation after the dispatcher reschedules.",
+      };
+    case "finished":
+      return {
+        title: "Messaging finished",
+        description:
+          "This request is finished. You can read past messages, but new messages cannot be sent.",
+      };
+    case "read_only":
+      return {
+        title: "Read-only conversation",
+        description:
+          "This legacy conversation is available for viewing, but new messages cannot be sent.",
+      };
+    case "active":
+      return {
+        title: "Messaging unavailable",
+        description:
+          "Messaging is currently unavailable for this request.",
+      };
+  }
+}
+
 export function ConversationThread({
   jobOrderId,
 }: ConversationThreadProps) {
   const { user } = useAuth();
+  const { search } = useLocation();
+  const backToHistory =
+    new URLSearchParams(search).get("scope") === "all";
 
   const [conversation, setConversation] =
     useState<Conversation | null>(null);
   const [messages, setMessages] = useState<
     ConversationMessage[]
   >([]);
-  const [nextPage, setNextPage] = useState<
-    number | null
-  >(null);
+  const [nextPage, setNextPage] = useState<number | null>(
+    null,
+  );
   const [body, setBody] = useState("");
   const [loadError, setLoadError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [conflictMessage, setConflictMessage] =
+    useState("");
+  const [isConflictLocked, setIsConflictLocked] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingOlder, setIsLoadingOlder] =
     useState(false);
   const [isRefreshing, setIsRefreshing] =
     useState(false);
   const [isSending, setIsSending] = useState(false);
+
+  const refreshInFlight = useRef(false);
+  const availabilityRevision = useRef(0);
 
   const loadThread = useCallback(async () => {
     setIsLoading(true);
@@ -99,7 +142,6 @@ export function ConversationThread({
     try {
       const conversationResponse =
         await getJobOrderConversation(jobOrderId);
-
       const currentConversation =
         conversationResponse.data;
 
@@ -122,16 +164,22 @@ export function ConversationThread({
           ? 2
           : null,
       );
+      setConflictMessage("");
+      setIsConflictLocked(false);
 
       try {
         await markConversationRead(
           currentConversation.id,
         );
 
-        setConversation({
-          ...currentConversation,
-          unread_messages_count: 0,
-        });
+        setConversation((current) =>
+          current
+            ? {
+                ...current,
+                unread_messages_count: 0,
+              }
+            : current,
+        );
       } catch (error) {
         const details = getApiErrorDetails(
           error,
@@ -160,6 +208,124 @@ export function ConversationThread({
 
     return () => window.clearTimeout(timeoutId);
   }, [loadThread]);
+
+  const refreshThread = useCallback(
+    async (conversationId: number, silent = false) => {
+      if (refreshInFlight.current) {
+        return;
+      }
+
+      refreshInFlight.current = true;
+
+      if (!silent) {
+        setIsRefreshing(true);
+        setActionError("");
+      }
+
+      const revisionAtStart =
+        availabilityRevision.current;
+
+      try {
+        const conversationResponse =
+          await getConversation(conversationId);
+
+        if (
+          revisionAtStart ===
+          availabilityRevision.current
+        ) {
+          setConversation(conversationResponse.data);
+          setConflictMessage("");
+          setIsConflictLocked(false);
+        }
+
+        const messagesResponse =
+          await getConversationMessages(
+            conversationId,
+            {
+              page: 1,
+              per_page: PAGE_SIZE,
+            },
+          );
+
+        setMessages((current) =>
+          mergeMessages(
+            current,
+            messagesResponse.data.data,
+          ),
+        );
+
+        try {
+          await markConversationRead(conversationId);
+
+          setConversation((current) =>
+            current?.id === conversationId
+              ? {
+                  ...current,
+                  unread_messages_count: 0,
+                }
+              : current,
+          );
+        } catch (error) {
+          if (!silent) {
+            const details = getApiErrorDetails(
+              error,
+              "Messages refreshed, but they could not be marked as read.",
+            );
+
+            setActionError(details.message);
+          }
+        }
+      } catch (error) {
+        if (!silent) {
+          const details = getApiErrorDetails(
+            error,
+            "Unable to refresh this conversation.",
+          );
+
+          setActionError(details.message);
+        }
+      } finally {
+        refreshInFlight.current = false;
+
+        if (!silent) {
+          setIsRefreshing(false);
+        }
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!conversation?.id || isLoading) {
+      return;
+    }
+
+    const conversationId = conversation.id;
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshThread(conversationId, true);
+      }
+    };
+
+    const intervalId = window.setInterval(
+      refreshWhenVisible,
+      REFRESH_INTERVAL_MS,
+    );
+
+    window.addEventListener(
+      "focus",
+      refreshWhenVisible,
+    );
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener(
+        "focus",
+        refreshWhenVisible,
+      );
+    };
+  }, [conversation?.id, isLoading, refreshThread]);
 
   async function handleLoadOlder() {
     if (!conversation || nextPage === null) {
@@ -203,58 +369,16 @@ export function ConversationThread({
     }
   }
 
-  async function handleRefresh() {
-    if (!conversation) {
-      return;
-    }
-
-    setIsRefreshing(true);
-    setActionError("");
-
-    try {
-      const response = await getConversationMessages(
-        conversation.id,
-        {
-          page: 1,
-          per_page: PAGE_SIZE,
-        },
-      );
-
-      setMessages((current) =>
-        mergeMessages(
-          current,
-          response.data.data,
-        ),
-      );
-
-      await markConversationRead(conversation.id);
-
-      setConversation((current) =>
-        current
-          ? {
-              ...current,
-              unread_messages_count: 0,
-            }
-          : current,
-      );
-    } catch (error) {
-      const details = getApiErrorDetails(
-        error,
-        "Unable to refresh this conversation.",
-      );
-
-      setActionError(details.message);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }
-
   async function handleSend(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
-    if (!conversation) {
+    if (
+      !conversation ||
+      !conversation.can_send_messages ||
+      isConflictLocked
+    ) {
       return;
     }
 
@@ -286,32 +410,76 @@ export function ConversationThread({
       );
       setBody("");
     } catch (error) {
-      const details = getApiErrorDetails(
-        error,
-        "Unable to send your message.",
-      );
+      const unavailableMessage =
+        getMessagingUnavailableMessage(error);
 
-      setActionError(
-        details.fieldErrors.body ??
-          details.message,
-      );
+      if (unavailableMessage) {
+        availabilityRevision.current += 1;
+        const conflictRevision =
+          availabilityRevision.current;
+
+        setConflictMessage(unavailableMessage);
+        setIsConflictLocked(true);
+        setConversation((current) =>
+          current
+            ? {
+                ...current,
+                can_send_messages: false,
+              }
+            : current,
+        );
+
+        try {
+          const updatedConversation =
+            await getConversation(conversation.id);
+
+          if (
+            conflictRevision ===
+            availabilityRevision.current
+          ) {
+            setConversation(
+              updatedConversation.data,
+            );
+            setConflictMessage("");
+            setIsConflictLocked(false);
+          }
+        } catch {
+          // Keep sending disabled and preserve the draft until
+          // a later refresh can confirm the current state.
+        }
+      } else {
+        const details = getApiErrorDetails(
+          error,
+          "Unable to send your message.",
+        );
+
+        setActionError(
+          details.fieldErrors.body ??
+            details.message,
+        );
+      }
     } finally {
       setIsSending(false);
     }
   }
 
-  if (isLoading) {
+    if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-96 w-full" />
-      </div>
+      <section
+        aria-label="Loading conversation"
+        className="mx-auto max-w-5xl space-y-4"
+        role="status"
+      >
+        <Skeleton className="h-9 w-44 rounded-none" />
+        <Skeleton className="h-28 w-full rounded-none" />
+        <Skeleton className="h-96 w-full rounded-none" />
+      </section>
     );
   }
 
   if (loadError || !conversation) {
     return (
-      <div className="flex min-h-72 flex-col items-center justify-center gap-4 text-center">
+      <div className="mx-auto flex min-h-72 max-w-xl flex-col items-center justify-center gap-4 border p-5 text-center">
         <p
           className="max-w-md text-sm text-destructive"
           role="alert"
@@ -319,14 +487,24 @@ export function ConversationThread({
           {loadError || "Conversation not found."}
         </p>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => void loadThread()}
-        >
-          <RefreshCw aria-hidden={true} />
-          Try again
-        </Button>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button
+            onClick={() => void loadThread()}
+            type="button"
+            variant="outline"
+          >
+            <RefreshCw aria-hidden={true} />
+            Try again
+          </Button>
+
+          <Button
+            render={<Link to="/conversations" />}
+            variant="outline"
+          >
+            <ArrowLeft aria-hidden={true} />
+            Back to conversations
+          </Button>
+        </div>
       </div>
     );
   }
@@ -341,24 +519,36 @@ export function ConversationThread({
       ? `/customer/service-requests/${jobOrderId}`
       : `/technician/my-jobs/${jobOrderId}`;
 
+  const canSendMessages =
+    conversation.can_send_messages && !isConflictLocked;
+  const messagingStatus = getMessagingStatus(
+    conversation.messaging_state,
+  );
+
   return (
-    <section className="space-y-6">
+    <section className="mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none">
       <Button
-        render={<Link to="/conversations" />}
+        render={
+          <Link
+            to={
+              backToHistory
+                ? "/conversations?scope=all"
+                : "/conversations"
+            }
+          />
+        }
+        size="sm"
         variant="outline"
       >
         <ArrowLeft aria-hidden={true} />
         Back to conversations
       </Button>
 
-      <div className="flex flex-col justify-between gap-4 border bg-background p-5 sm:flex-row sm:items-start">
-        <div>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm text-muted-foreground">
-              {
-                conversation.job_order
-                  .job_order_number
-              }
+            <p className="font-mono text-xs text-muted-foreground">
+              {conversation.job_order.job_order_number}
             </p>
 
             <JobOrderStatusBadge
@@ -366,7 +556,7 @@ export function ConversationThread({
             />
           </div>
 
-          <h1 className="mt-2 text-2xl font-semibold">
+          <h1 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
             {conversation.job_order.title}
           </h1>
 
@@ -377,38 +567,55 @@ export function ConversationThread({
 
         <Button
           render={<Link to={requestHref} />}
+          size="sm"
           variant="outline"
         >
           View request
         </Button>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader className="flex-col gap-3 border-b sm:flex-row sm:items-center sm:justify-between">
+      {!canSendMessages ? (
+        <div
+          className="border bg-muted/30 px-4 py-3 text-sm"
+          id="conversation-availability"
+          role="status"
+        >
+          <p className="font-medium">
+            {messagingStatus.title}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            {conflictMessage || messagingStatus.description}
+          </p>
+        </div>
+      ) : null}
+
+      <Card className="gap-0 rounded-none py-0 shadow-none">
+        <CardHeader className="flex flex-col gap-3 rounded-none border-b p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Messages</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              Press Refresh to check for new replies.
+              Messages and availability update while this page is open.
+              Refresh to check now.
             </p>
           </div>
 
           <Button
+            disabled={isRefreshing}
+            onClick={() =>
+              void refreshThread(conversation.id)
+            }
             type="button"
             variant="outline"
-            disabled={isRefreshing}
-            onClick={() => void handleRefresh()}
           >
             <RefreshCw aria-hidden={true} />
-            {isRefreshing
-              ? "Refreshing..."
-              : "Refresh"}
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-5 py-5">
+        <CardContent className="space-y-5 p-5">
           {actionError ? (
             <p
-              className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
               role="alert"
             >
               {actionError}
@@ -418,10 +625,10 @@ export function ConversationThread({
           {nextPage !== null ? (
             <div className="text-center">
               <Button
-                type="button"
-                variant="outline"
                 disabled={isLoadingOlder}
                 onClick={() => void handleLoadOlder()}
+                type="button"
+                variant="outline"
               >
                 {isLoadingOlder
                   ? "Loading..."
@@ -431,12 +638,12 @@ export function ConversationThread({
           ) : null}
 
           {messages.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center">
-              <p className="font-medium">
-                No messages yet
-              </p>
+            <div className="border border-dashed p-8 text-center">
+              <p className="font-medium">No messages yet</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Start the conversation below.
+                {canSendMessages
+                  ? "Start the conversation below."
+                  : "There are no past messages to display."}
               </p>
             </div>
           ) : (
@@ -479,18 +686,9 @@ export function ConversationThread({
             </ol>
           )}
         </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Send a message</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <form
-            className="space-y-4"
-            onSubmit={handleSend}
-          >
+        <div className="border-t p-5">
+          <form className="space-y-4" onSubmit={handleSend}>
             <div className="space-y-2">
               <Label htmlFor="conversation-message">
                 Message
@@ -501,8 +699,18 @@ export function ConversationThread({
                 value={body}
                 maxLength={5000}
                 rows={4}
+                readOnly={!canSendMessages}
                 disabled={isSending}
-                placeholder="Write your message..."
+                aria-describedby={
+                  !canSendMessages
+                    ? "conversation-availability"
+                    : undefined
+                }
+                placeholder={
+                  canSendMessages
+                    ? "Write your message..."
+                    : "Messaging is unavailable."
+                }
                 onChange={(event) =>
                   setBody(event.target.value)
                 }
@@ -514,16 +722,15 @@ export function ConversationThread({
             </div>
 
             <Button
+              className="w-full sm:w-auto"
+              disabled={isSending || !canSendMessages}
               type="submit"
-              disabled={isSending}
             >
               <Send aria-hidden={true} />
-              {isSending
-                ? "Sending..."
-                : "Send message"}
+              {isSending ? "Sending..." : "Send message"}
             </Button>
           </form>
-        </CardContent>
+        </div>
       </Card>
     </section>
   );

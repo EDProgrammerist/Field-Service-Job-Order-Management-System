@@ -34,8 +34,8 @@ import {
   getTechnicianSchedule,
 } from "@/services/technician-job-orders";
 import { getMyTechnician } from "@/services/technicians";
-import type { TechnicianJobOrder } from "@/types/technician-job-order";
 import type { Technician } from "@/types/technician";
+import type { TechnicianJobOrder } from "@/types/technician-job-order";
 
 interface MetricCardProps {
   label: string;
@@ -45,9 +45,7 @@ interface MetricCardProps {
 }
 
 function formatDate(value: string | null) {
-  if (!value) {
-    return "Not scheduled";
-  }
+  if (!value) return "Not scheduled";
 
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
@@ -62,15 +60,16 @@ function MetricCard({
   icon: Icon,
 }: MetricCardProps) {
   return (
-    <Card>
-      <CardContent className="flex min-h-40 flex-col justify-between p-5">
-        <Icon className="size-5 text-muted-foreground" />
-
-        <div>
-          <p className="text-3xl font-semibold">
+    <Card className="gap-0 rounded-none py-0 shadow-none">
+      <CardContent className="flex min-h-44 flex-col justify-between p-5">
+        <div className="flex size-9 items-center justify-center border bg-muted/30">
+          <Icon className="size-4 text-muted-foreground" />
+        </div>
+        <div className="mt-5">
+          <p className="text-3xl font-semibold tracking-tight">
             {value.toLocaleString()}
           </p>
-          <p className="mt-1 font-medium">{label}</p>
+          <p className="mt-1 text-sm font-medium">{label}</p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {description}
           </p>
@@ -86,28 +85,30 @@ function ScheduledJobCard({
   jobOrder: TechnicianJobOrder;
 }) {
   return (
-    <article className="border-b p-5 last:border-b-0">
+    <article className="border-b p-5 transition-colors hover:bg-muted/30 last:border-b-0">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-medium text-muted-foreground">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
               {jobOrder.job_order_number}
-            </p>
-            <JobOrderStatusBadge
-              status={jobOrder.status}
-            />
+            </span>
+            <JobOrderStatusBadge status={jobOrder.status} />
             <JobOrderPriorityBadge
               priority={jobOrder.priority}
             />
           </div>
 
-          <h3 className="mt-2 truncate font-medium">
+          <h3 className="mt-3 truncate font-medium">
             {jobOrder.title}
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 truncate text-sm text-muted-foreground">
             {jobOrder.customer.name}
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <CalendarClock
+              aria-hidden={true}
+              className="size-3.5"
+            />
             {formatDate(jobOrder.scheduled_at)}
           </p>
         </div>
@@ -120,8 +121,9 @@ function ScheduledJobCard({
           }
           size="sm"
           variant="outline"
+          className="w-full shrink-0 sm:w-auto"
         >
-          View
+          View job
           <ArrowRight aria-hidden={true} />
         </Button>
       </div>
@@ -136,9 +138,8 @@ export function TechnicianDashboard() {
     useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [inProgressCount, setInProgressCount] = useState(0);
-  const [scheduledJobs, setScheduledJobs] = useState<
-    TechnicianJobOrder[]
-  >([]);
+  const [scheduledJobs, setScheduledJobs] =
+    useState<TechnicianJobOrder[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -184,7 +185,6 @@ export function TechnicianDashboard() {
         error,
         "Unable to load your technician dashboard.",
       );
-
       setErrorMessage(details.message);
     } finally {
       setIsLoading(false);
@@ -201,26 +201,30 @@ export function TechnicianDashboard() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-32 w-full" />
-
+      <div
+        className="space-y-4"
+        aria-label="Loading technician dashboard"
+      >
+        <Skeleton className="h-36 w-full rounded-none" />
         <div className="grid gap-4 md:grid-cols-3">
           {Array.from({ length: 3 }, (_, index) => (
             <Skeleton
-              className="h-40 w-full"
+              className="h-44 w-full rounded-none"
               key={index}
             />
           ))}
         </div>
-
-        <Skeleton className="h-80 w-full" />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Skeleton className="h-72 w-full rounded-none" />
+          <Skeleton className="h-72 w-full rounded-none lg:col-span-2" />
+        </div>
       </div>
     );
   }
 
   if (errorMessage || !technician) {
     return (
-      <div className="flex min-h-72 flex-col items-center justify-center gap-4 text-center">
+      <div className="flex min-h-72 flex-col items-center justify-center gap-4 border bg-background p-6 text-center">
         <p
           className="max-w-md text-sm text-destructive"
           role="alert"
@@ -228,7 +232,6 @@ export function TechnicianDashboard() {
           {errorMessage ||
             "Technician dashboard is unavailable."}
         </p>
-
         <Button
           type="button"
           variant="outline"
@@ -242,23 +245,23 @@ export function TechnicianDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="flex flex-col justify-between gap-4 border bg-background p-5 lg:flex-row lg:items-center">
+    <div className="space-y-4">
+      <section className="flex flex-col justify-between gap-5 border bg-background p-5 lg:flex-row lg:items-center">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Technician workspace
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             Welcome, {technician.user.name}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {technician.employee_number} ·{" "}
             {technician.specialization ??
               "No specialization listed"}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button
             type="button"
             variant="outline"
@@ -267,7 +270,6 @@ export function TechnicianDashboard() {
             <RefreshCw aria-hidden={true} />
             Refresh
           </Button>
-
           <Button
             render={<Link to="/technician/my-jobs" />}
           >
@@ -277,21 +279,22 @@ export function TechnicianDashboard() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section
+        className="grid gap-4 md:grid-cols-3"
+        aria-label="Technician job overview"
+      >
         <MetricCard
           description="Official schedules waiting for your decision."
           icon={UserRoundCheck}
           label="Awaiting response"
           value={awaitingResponseCount}
         />
-
         <MetricCard
-          description="Accepted work that is ready to begin."
+          description="Accepted service work ready to begin."
           icon={CheckCircle2}
           label="Accepted jobs"
           value={acceptedCount}
         />
-
         <MetricCard
           description="Service work currently underway."
           icon={Play}
@@ -300,24 +303,43 @@ export function TechnicianDashboard() {
         />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wrench className="size-4 text-muted-foreground" />
+      <section className="grid items-start gap-4 lg:grid-cols-3">
+        <Card className="gap-0 rounded-none py-0 shadow-none">
+          <CardHeader className="flex flex-row items-center gap-2 border-b p-5">
+            <Wrench
+              aria-hidden={true}
+              className="size-4 text-muted-foreground"
+            />
+            <CardTitle className="text-base">
               Technician profile
             </CardTitle>
           </CardHeader>
-
-          <CardContent className="space-y-3 text-sm">
-            <p className="font-medium">
-              {technician.user.name}
-            </p>
-            <p>{technician.user.email}</p>
-            <p>
-              {technician.phone ?? "No phone number"}
-            </p>
-            <p className="text-muted-foreground">
+          <CardContent className="space-y-4 p-5 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Name
+              </p>
+              <p className="mt-1 font-medium">
+                {technician.user.name}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Email
+              </p>
+              <p className="mt-1 break-all">
+                {technician.user.email}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Phone
+              </p>
+              <p className="mt-1">
+                {technician.phone ?? "No phone number"}
+              </p>
+            </div>
+            <p className="border-t pt-4 text-xs text-muted-foreground">
               {technician.is_active
                 ? "Active technician"
                 : "Inactive technician"}
@@ -325,18 +347,23 @@ export function TechnicianDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-              <CalendarClock className="size-4 text-muted-foreground" />
+        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-2">
+          <CardHeader className="flex flex-row items-center gap-2 border-b p-5">
+            <CalendarClock
+              aria-hidden={true}
+              className="size-4 text-muted-foreground"
+            />
+            <CardTitle className="text-base">
               Upcoming scheduled work
             </CardTitle>
           </CardHeader>
-
           <CardContent className="p-0">
             {scheduledJobs.length === 0 ? (
-              <div className="p-8 text-center">
-                <ClipboardList className="mx-auto size-8 text-muted-foreground" />
+              <div className="flex min-h-48 flex-col items-center justify-center p-6 text-center">
+                <ClipboardList
+                  aria-hidden={true}
+                  className="size-6 text-muted-foreground"
+                />
                 <p className="mt-3 font-medium">
                   No active scheduled work
                 </p>
@@ -357,9 +384,7 @@ export function TechnicianDashboard() {
             <div className="border-t p-4">
               <Button
                 className="w-full"
-                render={
-                  <Link to="/technician/schedule" />
-                }
+                render={<Link to="/technician/schedule" />}
                 variant="outline"
               >
                 View full schedule

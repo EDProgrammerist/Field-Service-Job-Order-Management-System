@@ -74,9 +74,7 @@ export function TechnicianJobActions({
     });
   }
 
-  async function performAction(
-    action: TechnicianAction,
-  ) {
+  async function performAction(action: TechnicianAction) {
     if (
       action === "reject" &&
       rejectReason.trim().length === 0
@@ -85,9 +83,7 @@ export function TechnicianJobActions({
         reason:
           "Please provide a reason for rejecting the schedule.",
       });
-      setErrorMessage(
-        "A rejection reason is required.",
-      );
+      setErrorMessage("A rejection reason is required.");
       return;
     }
 
@@ -161,12 +157,12 @@ export function TechnicianJobActions({
 
   if (!hasAction) {
     return (
-      <Card className="lg:col-span-3">
-        <CardHeader>
+      <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-3">
+        <CardHeader className="rounded-none border-b p-5">
           <CardTitle>Available actions</CardTitle>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-5">
           <p className="text-sm text-muted-foreground">
             No technician action is available for this request
             in its current status.
@@ -177,15 +173,15 @@ export function TechnicianJobActions({
   }
 
   return (
-    <Card className="lg:col-span-3">
-      <CardHeader>
+    <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-3">
+      <CardHeader className="rounded-none border-b p-5">
         <CardTitle>Technician actions</CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-5">
         {errorMessage ? (
           <div
-            className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             role="alert"
           >
             <p>{errorMessage}</p>
@@ -193,9 +189,9 @@ export function TechnicianJobActions({
             {fieldErrors.schedule_version ? (
               <Button
                 className="mt-3"
+                onClick={() => void onRefresh()}
                 type="button"
                 variant="outline"
-                onClick={() => void onRefresh()}
               >
                 <RefreshCw aria-hidden={true} />
                 Refresh schedule
@@ -206,101 +202,120 @@ export function TechnicianJobActions({
 
         {jobOrder.allowed_actions.accept ||
         jobOrder.allowed_actions.reject ? (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-3 rounded-lg border p-4">
-              <div>
-                <h3 className="font-medium">
-                  Accept official schedule
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Accept schedule version{" "}
-                  {jobOrder.schedule_version}.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="accept-remarks">
-                  Acceptance remarks
-                </Label>
-
-                <Textarea
-                  id="accept-remarks"
-                  maxLength={2000}
-                  value={acceptRemarks}
-                  disabled={actionInProgress !== null}
-                  placeholder="Optional remarks about the schedule."
-                  onChange={(event) =>
-                    setAcceptRemarks(event.target.value)
-                  }
-                />
-              </div>
-
-              <Button
-                type="button"
-                disabled={actionInProgress !== null}
-                onClick={() =>
-                  void performAction("accept")
-                }
-              >
-                <CheckCircle2 aria-hidden={true} />
-                {actionInProgress === "accept"
-                  ? "Accepting..."
-                  : "Accept schedule"}
-              </Button>
-            </div>
-
-            <div className="space-y-3 rounded-lg border border-destructive/30 p-4">
-              <div>
-                <h3 className="font-medium">
-                  Reject official schedule
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Explain why dispatch should reschedule this
-                  request.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reject-reason">
-                  Rejection reason
-                </Label>
-
-                <Textarea
-                  id="reject-reason"
-                  maxLength={2000}
-                  value={rejectReason}
-                  aria-invalid={Boolean(
-                    fieldErrors.reason,
-                  )}
-                  disabled={actionInProgress !== null}
-                  placeholder="Example: I am unavailable during this period."
-                  onChange={(event) => {
-                    setRejectReason(event.target.value);
-                    clearFieldError("reason");
-                  }}
-                />
-
-                {fieldErrors.reason ? (
-                  <p className="text-xs text-destructive">
-                    {fieldErrors.reason}
+          <div
+            className={
+              jobOrder.allowed_actions.accept &&
+              jobOrder.allowed_actions.reject
+                ? "grid gap-4 lg:grid-cols-2"
+                : "grid gap-4"
+            }
+          >
+            {jobOrder.allowed_actions.accept ? (
+              <div className="space-y-4 border p-4">
+                <div>
+                  <h3 className="font-medium">
+                    Accept official schedule
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Accept schedule version{" "}
+                    {jobOrder.schedule_version}.
                   </p>
-                ) : null}
-              </div>
+                </div>
 
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={actionInProgress !== null}
-                onClick={() =>
-                  void performAction("reject")
-                }
-              >
-                <XCircle aria-hidden={true} />
-                {actionInProgress === "reject"
-                  ? "Rejecting..."
-                  : "Reject schedule"}
-              </Button>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accept-remarks">
+                    Acceptance remarks
+                  </Label>
+
+                  <Textarea
+                    id="accept-remarks"
+                    maxLength={2000}
+                    value={acceptRemarks}
+                    disabled={actionInProgress !== null}
+                    placeholder="Optional remarks about the schedule."
+                    onChange={(event) =>
+                      setAcceptRemarks(event.target.value)
+                    }
+                  />
+                </div>
+
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={actionInProgress !== null}
+                  onClick={() =>
+                    void performAction("accept")
+                  }
+                  type="button"
+                >
+                  <CheckCircle2 aria-hidden={true} />
+                  {actionInProgress === "accept"
+                    ? "Accepting..."
+                    : "Accept schedule"}
+                </Button>
+              </div>
+            ) : null}
+
+            {jobOrder.allowed_actions.reject ? (
+              <div className="space-y-4 border border-destructive/30 p-4">
+                <div>
+                  <h3 className="font-medium">
+                    Reject official schedule
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Explain why dispatch should reschedule this
+                    request.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reject-reason">
+                    Rejection reason
+                  </Label>
+
+                  <Textarea
+                    id="reject-reason"
+                    maxLength={2000}
+                    value={rejectReason}
+                    aria-invalid={Boolean(fieldErrors.reason)}
+                    aria-describedby={
+                      fieldErrors.reason
+                        ? "reject-reason-error"
+                        : undefined
+                    }
+                    disabled={actionInProgress !== null}
+                    placeholder="Example: I am unavailable during this period."
+                    onChange={(event) => {
+                      setRejectReason(event.target.value);
+                      clearFieldError("reason");
+                    }}
+                  />
+
+                  {fieldErrors.reason ? (
+                    <p
+                      className="text-xs text-destructive"
+                      id="reject-reason-error"
+                    >
+                      {fieldErrors.reason}
+                    </p>
+                  ) : null}
+                </div>
+
+                <Button
+                  className="w-full sm:w-auto"
+                  disabled={actionInProgress !== null}
+                  onClick={() =>
+                    void performAction("reject")
+                  }
+                  type="button"
+                  variant="destructive"
+                >
+                  <XCircle aria-hidden={true} />
+                  {actionInProgress === "reject"
+                    ? "Rejecting..."
+                    : "Reject schedule"}
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -311,12 +326,11 @@ export function TechnicianJobActions({
                 Start service work
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Use this when work at the service location
-                begins.
+                Use this when work at the service location begins.
               </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="max-w-2xl space-y-2">
               <Label htmlFor="start-remarks">
                 Start remarks
               </Label>
@@ -334,9 +348,10 @@ export function TechnicianJobActions({
             </div>
 
             <Button
-              type="button"
+              className="w-full sm:w-auto"
               disabled={actionInProgress !== null}
               onClick={() => void performAction("start")}
+              type="button"
             >
               <Play aria-hidden={true} />
               {actionInProgress === "start"
@@ -353,12 +368,11 @@ export function TechnicianJobActions({
                 Complete service work
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Confirm that the requested service has been
-                completed.
+                Confirm that the requested service has been completed.
               </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="max-w-2xl space-y-2">
               <Label htmlFor="completion-remarks">
                 Completion remarks
               </Label>
@@ -376,11 +390,12 @@ export function TechnicianJobActions({
             </div>
 
             <Button
-              type="button"
+              className="w-full sm:w-auto"
               disabled={actionInProgress !== null}
               onClick={() =>
                 void performAction("complete")
               }
+              type="button"
             >
               <CheckCircle2 aria-hidden={true} />
               {actionInProgress === "complete"

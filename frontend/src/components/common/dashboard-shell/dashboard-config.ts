@@ -174,32 +174,7 @@ export const dashboardRoleConfigs: Record<
         ],
       },
     ],
-    notifications: [
-      {
-        id: 1,
-        title: "Scheduling queue",
-        description:
-          "Review requests that need an official schedule.",
-        icon: ClipboardList,
-        read: false,
-      },
-      {
-        id: 2,
-        title: "Technician responses",
-        description:
-          "Monitor schedules awaiting technician approval.",
-        icon: UsersRound,
-        read: false,
-      },
-      {
-        id: 3,
-        title: "Rejected schedules",
-        description:
-          "Reschedule requests rejected by technicians.",
-        icon: Wrench,
-        read: true,
-      },
-    ],
+    notifications: [],
   },
 
   technician: {
@@ -228,14 +203,12 @@ export const dashboardRoleConfigs: Record<
             icon: ClipboardList,
             matchNested: true,
           },
-
           {
             label: "Conversations",
             href: "/conversations",
             icon: MessageCircle,
             matchNested: true,
           },
-
           {
             label: "My Schedule",
             href: "/technician/schedule",
@@ -245,22 +218,7 @@ export const dashboardRoleConfigs: Record<
         ],
       },
     ],
-    notifications: [
-      {
-        id: 1,
-        title: "Assigned job",
-        description: "A job order has been assigned to you.",
-        icon: ClipboardList,
-        read: false,
-      },
-      {
-        id: 2,
-        title: "Schedule reminder",
-        description: "Review the scheduled time for your next job.",
-        icon: Wrench,
-        read: false,
-      },
-    ],
+    notifications: [],
   },
 
   customer: {
@@ -289,7 +247,6 @@ export const dashboardRoleConfigs: Record<
             icon: FilePlus2,
             exact: true,
           },
-
           {
             label: "Conversations",
             href: "/conversations",
@@ -306,22 +263,7 @@ export const dashboardRoleConfigs: Record<
         ],
       },
     ],
-    notifications: [
-      {
-        id: 1,
-        title: "Request received",
-        description: "Your service request has been received.",
-        icon: ClipboardList,
-        read: false,
-      },
-      {
-        id: 2,
-        title: "Service update",
-        description: "A service request status has been updated.",
-        icon: Wrench,
-        read: false,
-      },
-    ],
+    notifications: [],
   },
 };
 
@@ -357,10 +299,7 @@ export function getDashboardPageInformation(
   role: UserRole,
   pathname: string,
 ): DashboardPageInformation {
-  if (
-    role === "customer" ||
-    role === "technician"
-  ) {
+  if (role === "customer" || role === "technician") {
     if (pathname === "/conversations") {
       return {
         eyebrow: "Messages",
@@ -368,17 +307,14 @@ export function getDashboardPageInformation(
       };
     }
 
-    if (
-      pathname.startsWith(
-        "/conversations/job-orders/",
-      )
-    ) {
+    if (pathname.startsWith("/conversations/job-orders/")) {
       return {
         eyebrow: "Messages",
         title: "Conversation",
       };
     }
   }
+
   if (role === "admin") {
     if (pathname === "/admin/dashboard") {
       return {

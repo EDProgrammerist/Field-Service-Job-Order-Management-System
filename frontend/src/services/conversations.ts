@@ -4,6 +4,7 @@ import type {
   ConversationMessage,
   ConversationMessageResponse,
   ConversationResponse,
+  ConversationScope,
   MarkConversationReadResponse,
 } from "@/types/conversation";
 import type { PaginatedResponse } from "@/types/pagination";
@@ -13,14 +14,27 @@ interface PaginationParams {
   per_page?: number;
 }
 
+interface GetConversationsParams extends PaginationParams {
+  scope?: ConversationScope;
+}
+
 export async function getConversations(
-  params: PaginationParams = {},
+  params: GetConversationsParams = {},
 ): Promise<PaginatedResponse<Conversation>> {
-  const response = await api.get<
-    PaginatedResponse<Conversation>
-  >("/conversations", {
-    params,
-  });
+  const response = await api.get<PaginatedResponse<Conversation>>(
+    "/conversations",
+    { params },
+  );
+
+  return response.data;
+}
+
+export async function getConversation(
+  conversationId: number,
+): Promise<ConversationResponse> {
+  const response = await api.get<ConversationResponse>(
+    `/conversations/${conversationId}`,
+  );
 
   return response.data;
 }
@@ -52,11 +66,10 @@ export async function sendConversationMessage(
   conversationId: number,
   body: string,
 ): Promise<ConversationMessageResponse> {
-  const response = await api.post<
-    ConversationMessageResponse
-  >(`/conversations/${conversationId}/messages`, {
-    body,
-  });
+  const response = await api.post<ConversationMessageResponse>(
+    `/conversations/${conversationId}/messages`,
+    { body },
+  );
 
   return response.data;
 }
@@ -64,10 +77,9 @@ export async function sendConversationMessage(
 export async function markConversationRead(
   conversationId: number,
 ): Promise<MarkConversationReadResponse> {
-  const response =
-    await api.patch<MarkConversationReadResponse>(
-      `/conversations/${conversationId}/read`,
-    );
+  const response = await api.patch<MarkConversationReadResponse>(
+    `/conversations/${conversationId}/read`,
+  );
 
   return response.data;
 }

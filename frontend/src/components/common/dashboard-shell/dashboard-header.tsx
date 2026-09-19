@@ -47,6 +47,7 @@ export function DashboardHeader() {
 
         <DashboardNotifications
           key={user.role}
+          role={user.role}
           label={`${config.roleLabel} notifications`}
           notifications={config.notifications}
         />

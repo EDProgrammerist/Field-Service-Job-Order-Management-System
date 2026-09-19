@@ -311,18 +311,22 @@ export function DispatcherScheduleForm({
     }
   }
 
-  if (isLoading) {
+
+      if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <div
+        className="grid gap-4 lg:grid-cols-3"
+        aria-label="Loading schedule form"
+      >
+        <Skeleton className="h-64 rounded-none" />
+        <Skeleton className="h-96 rounded-none lg:col-span-2" />
       </div>
     );
   }
 
   if (!jobOrder) {
     return (
-      <div className="flex min-h-64 flex-col items-center justify-center gap-4 text-center">
+      <div className="flex min-h-64 flex-col items-center justify-center gap-4 border bg-background p-6 text-center">
         <p className="text-sm text-destructive" role="alert">
           {errorMessage ||
             "Scheduling request could not be loaded."}
@@ -342,22 +346,20 @@ export function DispatcherScheduleForm({
 
   if (!jobOrder.can_schedule) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center">
+      <Card className="gap-0 rounded-none py-0 shadow-none">
+        <CardContent className="flex min-h-64 flex-col items-center justify-center p-6 text-center">
           <p className="font-medium">
             This request can no longer be scheduled.
           </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Its current status is{" "}
-            <JobOrderStatusBadge status={jobOrder.status} />.
-          </p>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+            <span>Current status:</span>
+            <JobOrderStatusBadge status={jobOrder.status} />
+          </div>
 
           <Button
             className="mt-6"
             render={
-              <Link
-                to={`/dispatcher/job-orders/${jobOrder.id}`}
-              />
+              <Link to={`/dispatcher/job-orders/${jobOrder.id}`} />
             }
             variant="outline"
           >
@@ -372,33 +374,34 @@ export function DispatcherScheduleForm({
 
   return (
     <form
-      className="grid gap-6 lg:grid-cols-3"
+      className="grid items-start gap-4 lg:grid-cols-3"
       noValidate
       onSubmit={handleSubmit}
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>Request assignment</CardTitle>
+      <Card className="gap-0 rounded-none py-0 shadow-none">
+        <CardHeader className="border-b p-5">
+          <CardTitle className="text-base">
+            Scheduling request
+          </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-4 text-sm">
+        <CardContent className="space-y-5 p-5 text-sm">
           <div>
-            <p className="text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Job order
             </p>
-            <p className="mt-1 font-medium">
+            <p className="mt-2 font-medium">
               {jobOrder.job_order_number}
             </p>
-            <p className="mt-1">{jobOrder.title}</p>
+            <p className="mt-1 leading-6">{jobOrder.title}</p>
           </div>
 
-          <div>
-            <p className="text-muted-foreground">
+          <div className="border-t pt-5">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Customer-selected technician
             </p>
-            <p className="mt-1 font-medium">
-              {technician?.name ??
-                "Technician unavailable"}
+            <p className="mt-2 font-medium">
+              {technician?.name ?? "Technician unavailable"}
             </p>
             <p className="mt-1 text-muted-foreground">
               {technician?.specialization ??
@@ -406,26 +409,31 @@ export function DispatcherScheduleForm({
             </p>
           </div>
 
-          <p className="text-xs leading-5 text-muted-foreground">
-            Dispatch can set the official schedule, but cannot
-            replace the technician selected by the customer.
+          <p className="border-t pt-5 text-xs leading-5 text-muted-foreground">
+            Dispatch assigns the official date and time. The
+            technician chosen by the customer cannot be replaced
+            here.
           </p>
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>
+      <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-2">
+        <CardHeader className="border-b p-5">
+          <CardTitle className="text-base">
             {jobOrder.schedule_version > 0
               ? "Update official schedule"
               : "Set official schedule"}
           </CardTitle>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Choose the service window, check technician
+            availability, then save.
+          </p>
         </CardHeader>
 
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-6 p-5">
           {errorMessage ? (
             <p
-              className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
               role="alert"
             >
               {errorMessage}
@@ -437,11 +445,11 @@ export function DispatcherScheduleForm({
               <Label htmlFor="scheduled-at">
                 Scheduled start
               </Label>
-
               <Input
                 id="scheduled-at"
                 type="datetime-local"
                 value={scheduledAt}
+                className="rounded-none"
                 aria-invalid={Boolean(
                   fieldErrors.scheduled_at,
                 )}
@@ -452,7 +460,6 @@ export function DispatcherScheduleForm({
                   invalidateAvailabilityCheck();
                 }}
               />
-
               {fieldErrors.scheduled_at ? (
                 <p className="text-xs text-destructive">
                   {fieldErrors.scheduled_at}
@@ -464,11 +471,11 @@ export function DispatcherScheduleForm({
               <Label htmlFor="scheduled-end-at">
                 Scheduled end
               </Label>
-
               <Input
                 id="scheduled-end-at"
                 type="datetime-local"
                 value={scheduledEndAt}
+                className="rounded-none"
                 aria-invalid={Boolean(
                   fieldErrors.scheduled_end_at,
                 )}
@@ -479,7 +486,6 @@ export function DispatcherScheduleForm({
                   invalidateAvailabilityCheck();
                 }}
               />
-
               {fieldErrors.scheduled_end_at ? (
                 <p className="text-xs text-destructive">
                   {fieldErrors.scheduled_end_at}
@@ -488,15 +494,15 @@ export function DispatcherScheduleForm({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 border-t pt-5">
             <Label htmlFor="schedule-remarks">
               Scheduling remarks
             </Label>
-
             <Textarea
               id="schedule-remarks"
               value={remarks}
               maxLength={2000}
+              className="min-h-28 rounded-none"
               aria-invalid={Boolean(fieldErrors.remarks)}
               disabled={isSubmitting}
               placeholder="Optional information about the official schedule."
@@ -505,27 +511,30 @@ export function DispatcherScheduleForm({
                 clearFieldError("remarks");
               }}
             />
-
             <div className="flex justify-between gap-3 text-xs text-muted-foreground">
-              <span>{fieldErrors.remarks ?? "Optional"}</span>
+              <span>
+                {fieldErrors.remarks ?? "Optional"}
+              </span>
               <span>{remarks.length}/2000</span>
             </div>
           </div>
 
-          <div className="rounded-lg border bg-muted/20 p-4">
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="border bg-muted/20 p-5">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <p className="font-medium">
                   Technician availability
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Check the selected technician before saving.
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Check the customer-selected technician for this
+                  exact start and end time before saving.
                 </p>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
+                className="w-full shrink-0 sm:w-auto"
                 disabled={
                   isChecking ||
                   isSubmitting ||
@@ -543,18 +552,18 @@ export function DispatcherScheduleForm({
             </div>
 
             {availability ? (
-              <div className="mt-4">
+              <div className="mt-5">
                 {availability.is_available ? (
                   <p
-                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400"
+                    className="border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400"
                     role="status"
                   >
                     The technician is available for this time
-                    range.
+                    range. You can save the official schedule.
                   </p>
                 ) : (
                   <div
-                    className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-3 text-sm text-destructive"
+                    className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
                     role="alert"
                   >
                     <p className="font-medium">
@@ -568,18 +577,18 @@ export function DispatcherScheduleForm({
                     ) : null}
 
                     {availability.conflicts.length > 0 ? (
-                      <ul className="mt-3 space-y-2">
+                      <ul className="mt-4 space-y-3 border-t border-destructive/20 pt-4">
                         {availability.conflicts.map(
                           (conflict) => (
                             <li key={conflict.id}>
                               <Link
-                                className="underline underline-offset-4"
+                                className="font-medium underline underline-offset-4"
                                 to={`/dispatcher/job-orders/${conflict.id}`}
                               >
                                 {conflict.job_order_number}:{" "}
                                 {conflict.title}
                               </Link>
-                              <span className="block">
+                              <span className="mt-1 block">
                                 {formatDate(
                                   conflict.scheduled_at,
                                 )}{" "}
@@ -599,19 +608,16 @@ export function DispatcherScheduleForm({
             ) : null}
           </div>
 
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
             <Button
               render={
-                <Link
-                  to={`/dispatcher/job-orders/${jobOrder.id}`}
-                />
+                <Link to={`/dispatcher/job-orders/${jobOrder.id}`} />
               }
               type="button"
               variant="outline"
             >
               Cancel
             </Button>
-
             <Button
               type="submit"
               disabled={isSubmitting || isChecking}

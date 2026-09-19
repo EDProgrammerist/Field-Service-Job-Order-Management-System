@@ -11,25 +11,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { UserRole } from "@/types/auth";
 
 interface DashboardNotificationsProps {
+  role: UserRole;
   label: string;
   notifications: DashboardNotification[];
 }
 
 export function DashboardNotifications({
+  role,
   label,
   notifications: initialNotifications,
 }: DashboardNotificationsProps) {
+  const isAdmin = role === "admin";
+
   const [notifications, setNotifications] = useState(() =>
     initialNotifications.map((notification) => ({
       ...notification,
     })),
   );
 
-  const unreadCount = notifications.filter(
-    (notification) => !notification.read,
-  ).length;
+  const unreadCount = isAdmin
+    ? notifications.filter((notification) => !notification.read).length
+    : 0;
 
   function markNotificationAsRead(notificationId: number) {
     setNotifications((currentNotifications) =>
@@ -53,7 +58,11 @@ export function DashboardNotifications({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={`Open notifications. ${unreadCount} unread.`}
+        aria-label={
+          isAdmin
+            ? `Open notifications. ${unreadCount} unread.`
+            : "Open notifications"
+        }
         render={
           <Button
             className="relative rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
@@ -86,11 +95,13 @@ export function DashboardNotifications({
             </DropdownMenuLabel>
 
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {unreadCount === 0
-                ? "You are all caught up."
-                : `${unreadCount} unread notification${
-                    unreadCount === 1 ? "" : "s"
-                  }.`}
+              {isAdmin
+                ? unreadCount === 0
+                  ? "You are all caught up."
+                  : `${unreadCount} unread notification${
+                      unreadCount === 1 ? "" : "s"
+                    }.`
+                : "No live notifications yet."}
             </p>
           </div>
 
@@ -109,41 +120,51 @@ export function DashboardNotifications({
 
         <DropdownMenuSeparator />
 
-        {notifications.map((notification) => (
-          <DropdownMenuItem
-            className="items-start gap-3 px-2 py-2.5"
-            key={notification.id}
-            onClick={() =>
-              markNotificationAsRead(notification.id)
-            }
-          >
-            <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted/50">
-              <notification.icon
-                aria-hidden={true}
-                className="size-4"
-              />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-medium">
-                  {notification.title}
-                </p>
-
-                {!notification.read ? (
-                  <span
-                    aria-label="Unread"
-                    className="size-1.5 shrink-0 rounded-full bg-red-500"
-                  />
-                ) : null}
+        {isAdmin ? (
+          notifications.map((notification) => (
+            <DropdownMenuItem
+              className="items-start gap-3 px-2 py-2.5"
+              key={notification.id}
+              onClick={() => markNotificationAsRead(notification.id)}
+            >
+              <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted/50">
+                <notification.icon
+                  aria-hidden={true}
+                  className="size-4"
+                />
               </div>
 
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                {notification.description}
-              </p>
-            </div>
-          </DropdownMenuItem>
-        ))}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-medium">
+                    {notification.title}
+                  </p>
+
+                  {!notification.read ? (
+                    <span
+                      aria-label="Unread"
+                      className="size-1.5 shrink-0 rounded-full bg-red-500"
+                    />
+                  ) : null}
+                </div>
+
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {notification.description}
+                </p>
+              </div>
+            </DropdownMenuItem>
+          ))
+        ) : (
+          <div className="px-4 py-6 text-center">
+            <p className="text-sm font-medium">
+              No live notifications yet
+            </p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Updates will appear here when notifications are connected
+              to the backend.
+            </p>
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

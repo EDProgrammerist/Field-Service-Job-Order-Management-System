@@ -1,10 +1,10 @@
-import { DashboardLayout } from "@/components/common/dashboard-layout";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { CustomerServiceRequestList } from "@/components/features/customers/customer-service-request-list";
 
 export default function CustomerServiceRequestsPage() {
   return (
-    <DashboardLayout>
+    <DashboardShell>
       <CustomerServiceRequestList />
-    </DashboardLayout>
+    </DashboardShell>
   );
 }

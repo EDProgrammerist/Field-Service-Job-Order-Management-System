@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 
-import { DashboardLayout } from "@/components/common/dashboard-layout";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { CustomerServiceRequestDetails } from "@/components/features/customers/customer-service-request-details";
 
 export default function CustomerServiceRequestDetailsPage() {
@@ -10,17 +10,17 @@ export default function CustomerServiceRequestDetailsPage() {
 
   if (!Number.isInteger(parsedJobOrderId) || parsedJobOrderId <= 0) {
     return (
-      <DashboardLayout>
+      <DashboardShell>
         <p className="text-sm text-destructive">
           Invalid service request identifier.
         </p>
-      </DashboardLayout>
+      </DashboardShell>
     );
   }
 
   return (
-    <DashboardLayout>
+    <DashboardShell>
       <CustomerServiceRequestDetails jobOrderId={parsedJobOrderId} />
-    </DashboardLayout>
+    </DashboardShell>
   );
 }

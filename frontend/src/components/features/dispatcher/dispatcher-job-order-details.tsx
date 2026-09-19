@@ -1,18 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
-import {
-  CalendarClock,
-  RefreshCw,
-  X,
-} from "lucide-react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { CalendarClock, RefreshCw, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router";
 
 import {
   JobOrderPriorityBadge,
@@ -39,9 +27,7 @@ interface DispatcherJobOrderDetailsProps {
 }
 
 function formatDate(value: string | null) {
-  if (!value) {
-    return "Not available";
-  }
+  if (!value) return "Not available";
 
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
@@ -70,9 +56,8 @@ export function DispatcherJobOrderDetails({
 
   const [jobOrder, setJobOrder] =
     useState<DispatcherJobOrder | null>(null);
-  const [statusHistory, setStatusHistory] = useState<
-    JobOrderStatusHistory[]
-  >([]);
+  const [statusHistory, setStatusHistory] =
+    useState<JobOrderStatusHistory[]>([]);
   const [successMessage, setSuccessMessage] = useState(
     () => getSuccessMessage(location.state),
   );
@@ -84,11 +69,10 @@ export function DispatcherJobOrderDetails({
     setErrorMessage("");
 
     try {
-      const [jobOrderResponse, historyResponse] =
-        await Promise.all([
-          getDispatcherJobOrder(jobOrderId),
-          getDispatcherJobOrderStatusHistory(jobOrderId),
-        ]);
+      const [jobOrderResponse, historyResponse] = await Promise.all([
+        getDispatcherJobOrder(jobOrderId),
+        getDispatcherJobOrderStatusHistory(jobOrderId),
+      ]);
 
       setJobOrder(jobOrderResponse.data);
       setStatusHistory(historyResponse.data.data);
@@ -97,7 +81,6 @@ export function DispatcherJobOrderDetails({
         error,
         "Unable to load this scheduling request.",
       );
-
       setErrorMessage(details.message);
     } finally {
       setIsLoading(false);
@@ -114,23 +97,24 @@ export function DispatcherJobOrderDetails({
 
   if (isLoading) {
     return (
-      <section className="space-y-6">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-72 w-full" />
+      <section
+        className="grid gap-4 lg:grid-cols-3"
+        aria-label="Loading scheduling request"
+      >
+        <Skeleton className="h-36 rounded-none lg:col-span-3" />
+        <Skeleton className="h-72 rounded-none lg:col-span-2" />
+        <Skeleton className="h-72 rounded-none" />
+        <Skeleton className="h-64 rounded-none lg:col-span-3" />
       </section>
     );
   }
 
   if (errorMessage || !jobOrder) {
     return (
-      <section className="flex min-h-72 flex-col items-center justify-center gap-4 text-center">
-        <p
-          className="max-w-md text-sm text-destructive"
-          role="alert"
-        >
+      <section className="flex min-h-72 flex-col items-center justify-center gap-4 border bg-background p-6 text-center">
+        <p className="max-w-md text-sm text-destructive" role="alert">
           {errorMessage || "Scheduling request not found."}
         </p>
-
         <Button
           type="button"
           variant="outline"
@@ -147,14 +131,13 @@ export function DispatcherJobOrderDetails({
   const revision = jobOrder.latest_schedule_revision;
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4">
       {successMessage ? (
         <div
-          className="flex items-start justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400"
+          className="flex items-start justify-between gap-3 border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400"
           role="status"
         >
           <span>{successMessage}</span>
-
           <Button
             aria-label="Dismiss message"
             onClick={() => {
@@ -173,22 +156,18 @@ export function DispatcherJobOrderDetails({
         </div>
       ) : null}
 
-      <div className="flex flex-col justify-between gap-4 border bg-background p-5 lg:flex-row lg:items-start">
-        <div>
+      <div className="flex flex-col justify-between gap-5 border bg-background p-5 lg:flex-row lg:items-start">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-muted-foreground">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
               {jobOrder.job_order_number}
-            </p>
+            </span>
             <JobOrderStatusBadge status={jobOrder.status} />
-            <JobOrderPriorityBadge
-              priority={jobOrder.priority}
-            />
+            <JobOrderPriorityBadge priority={jobOrder.priority} />
           </div>
-
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight">
             {jobOrder.title}
           </h2>
-
           <p className="mt-2 text-sm text-muted-foreground">
             Submitted {formatDate(jobOrder.created_at)}
           </p>
@@ -201,6 +180,7 @@ export function DispatcherJobOrderDetails({
                 to={`/dispatcher/job-orders/${jobOrder.id}/schedule`}
               />
             }
+            className="w-full shrink-0 sm:w-auto"
           >
             <CalendarClock aria-hidden={true} />
             {jobOrder.schedule_version > 0
@@ -210,28 +190,25 @@ export function DispatcherJobOrderDetails({
         ) : null}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Service request</CardTitle>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-2">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="text-base">Service request</CardTitle>
           </CardHeader>
-
-          <CardContent className="space-y-5 text-sm">
+          <CardContent className="grid gap-5 p-5 text-sm">
             <div>
-              <p className="text-muted-foreground">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Description
               </p>
-              <p className="mt-1 whitespace-pre-wrap">
-                {jobOrder.description ??
-                  "No description provided."}
+              <p className="mt-2 whitespace-pre-wrap leading-6">
+                {jobOrder.description ?? "No description provided."}
               </p>
             </div>
-
-            <div>
-              <p className="text-muted-foreground">
+            <div className="border-t pt-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Service address
               </p>
-              <p className="mt-1 whitespace-pre-wrap">
+              <p className="mt-2 whitespace-pre-wrap leading-6">
                 {jobOrder.service_address ??
                   "No service address provided."}
               </p>
@@ -239,49 +216,83 @@ export function DispatcherJobOrderDetails({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer</CardTitle>
+        <Card className="gap-0 rounded-none py-0 shadow-none">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="text-base">Customer</CardTitle>
           </CardHeader>
-
-          <CardContent className="space-y-3 text-sm">
-            <p className="font-medium">
-              {jobOrder.customer.name}
-            </p>
-            <p className="text-muted-foreground">
-              {jobOrder.customer.contact_person ??
-                "No contact person"}
-            </p>
-            <p>{jobOrder.customer.phone}</p>
-            <p className="break-all">
-              {jobOrder.customer.email ?? "No email address"}
-            </p>
+          <CardContent className="space-y-4 p-5 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Customer name
+              </p>
+              <p className="mt-1 font-medium">
+                {jobOrder.customer.name}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Contact person
+              </p>
+              <p className="mt-1">
+                {jobOrder.customer.contact_person ??
+                  "Not provided"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Phone
+              </p>
+              <p className="mt-1">{jobOrder.customer.phone}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Email
+              </p>
+              <p className="mt-1 break-all">
+                {jobOrder.customer.email ??
+                  "No email address"}
+              </p>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Selected technician</CardTitle>
+        <Card className="gap-0 rounded-none py-0 shadow-none">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="text-base">
+              Customer-selected technician
+            </CardTitle>
           </CardHeader>
-
-          <CardContent className="space-y-3 text-sm">
+          <CardContent className="space-y-4 p-5 text-sm">
             {technician ? (
               <>
-                <p className="font-medium">{technician.name}</p>
-                <p className="text-muted-foreground">
-                  {technician.employee_number}
-                </p>
-                <p>
-                  {technician.specialization ??
-                    "General service"}
-                </p>
-                <p>
-                  {technician.phone ??
-                    "No technician phone number"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  The technician was selected by the customer
-                  and cannot be changed by dispatch.
+                <div>
+                  <p className="font-medium">{technician.name}</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {technician.employee_number}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Specialization
+                  </p>
+                  <p className="mt-1">
+                    {technician.specialization ??
+                      "General service"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Phone
+                  </p>
+                  <p className="mt-1">
+                    {technician.phone ??
+                      "No technician phone number"}
+                  </p>
+                </div>
+                <p className="border-t pt-4 text-xs leading-5 text-muted-foreground">
+                  This technician was chosen by the customer.
+                  Dispatch can set the schedule but cannot change
+                  the technician.
                 </p>
               </>
             ) : (
@@ -292,37 +303,40 @@ export function DispatcherJobOrderDetails({
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Official schedule</CardTitle>
+        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-2">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="text-base">
+              Official schedule
+            </CardTitle>
           </CardHeader>
-
-          <CardContent className="grid gap-5 text-sm sm:grid-cols-2">
+          <CardContent className="grid gap-5 p-5 text-sm sm:grid-cols-2">
             <div>
-              <p className="text-muted-foreground">Starts</p>
+              <p className="text-xs text-muted-foreground">
+                Starts
+              </p>
               <p className="mt-1 font-medium">
                 {formatDate(jobOrder.scheduled_at)}
               </p>
             </div>
-
             <div>
-              <p className="text-muted-foreground">Ends</p>
+              <p className="text-xs text-muted-foreground">
+                Ends
+              </p>
               <p className="mt-1 font-medium">
                 {formatDate(jobOrder.scheduled_end_at)}
               </p>
             </div>
-
             <div>
-              <p className="text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Schedule version
               </p>
               <p className="mt-1">
-                {jobOrder.schedule_version || "Not scheduled"}
+                {jobOrder.schedule_version ||
+                  "Not scheduled"}
               </p>
             </div>
-
             <div>
-              <p className="text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Scheduled by
               </p>
               <p className="mt-1">
@@ -330,13 +344,12 @@ export function DispatcherJobOrderDetails({
                   "Not scheduled"}
               </p>
             </div>
-
             {revision?.remarks ? (
-              <div className="sm:col-span-2">
-                <p className="text-muted-foreground">
+              <div className="border-t pt-4 sm:col-span-2">
+                <p className="text-xs text-muted-foreground">
                   Latest scheduling remarks
                 </p>
-                <p className="mt-1 whitespace-pre-wrap">
+                <p className="mt-2 whitespace-pre-wrap leading-6">
                   {revision.remarks}
                 </p>
               </div>
@@ -344,18 +357,19 @@ export function DispatcherJobOrderDetails({
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Status history</CardTitle>
+        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-3">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="text-base">
+              Status history
+            </CardTitle>
           </CardHeader>
-
-          <CardContent>
+          <CardContent className="p-5">
             {statusHistory.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No status history is available.
               </p>
             ) : (
-              <ol className="space-y-4">
+              <ol className="space-y-5">
                 {statusHistory.map((history) => (
                   <li
                     className="border-l-2 border-primary/30 pl-4 text-sm"
@@ -369,13 +383,11 @@ export function DispatcherJobOrderDetails({
                         {formatDate(history.created_at)}
                       </span>
                     </div>
-
                     <p className="mt-2">
                       Changed by {history.changed_by.name}
                     </p>
-
                     {history.remarks ? (
-                      <p className="mt-1 text-muted-foreground">
+                      <p className="mt-1 whitespace-pre-wrap leading-6 text-muted-foreground">
                         {history.remarks}
                       </p>
                     ) : null}

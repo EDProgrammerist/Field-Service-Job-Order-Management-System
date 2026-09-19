@@ -1,7 +1,4 @@
-import {
-  useState,
-  type FormEvent,
-} from "react";
+import { useState, type FormEvent } from "react";
 
 import { CustomerTechnicianSelector } from "@/components/features/customers/customer-technician-selector";
 import { Button } from "@/components/ui/button";
@@ -37,9 +34,7 @@ export function CustomerServiceRequestForm() {
     });
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const technicianId = selectedTechnicianId;
@@ -109,14 +104,10 @@ export function CustomerServiceRequestForm() {
   }
 
   return (
-    <form
-      className="space-y-6"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="space-y-6" noValidate onSubmit={handleSubmit}>
       {errorMessage ? (
         <p
-          className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
           role="alert"
         >
           {errorMessage}
@@ -125,104 +116,141 @@ export function CustomerServiceRequestForm() {
 
       {successMessage ? (
         <p
-          className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400"
+          className="border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400"
           role="status"
         >
           {successMessage}
         </p>
       ) : null}
 
-      <CustomerTechnicianSelector
-        value={selectedTechnicianId}
-        disabled={isSubmitting}
-        errorMessage={fieldErrors.selected_technician_id}
-        onValueChange={(technicianId) => {
-          setSelectedTechnicianId(technicianId);
-          clearFieldError("selected_technician_id");
-        }}
-      />
-
-      <div className="space-y-2">
-        <Label htmlFor="request-title">
-          Service request title
-        </Label>
-
-        <Input
-          id="request-title"
-          value={title}
-          aria-invalid={Boolean(fieldErrors.title)}
-          onChange={(event) => {
-            setTitle(event.target.value);
-            clearFieldError("title");
-          }}
-          placeholder="Example: Air conditioner is not cooling"
+      <div className="border-b pb-6">
+        <CustomerTechnicianSelector
+          value={selectedTechnicianId}
           disabled={isSubmitting}
+          errorMessage={fieldErrors.selected_technician_id}
+          onValueChange={(technicianId) => {
+            setSelectedTechnicianId(technicianId);
+            clearFieldError("selected_technician_id");
+          }}
         />
-
-        {fieldErrors.title ? (
-          <p className="text-xs text-destructive">
-            {fieldErrors.title}
-          </p>
-        ) : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="request-description">
-          Describe the problem
-        </Label>
-
-        <Textarea
-          id="request-description"
-          value={description}
-          aria-invalid={Boolean(fieldErrors.description)}
-          onChange={(event) => {
-            setDescription(event.target.value);
-            clearFieldError("description");
-          }}
-          placeholder="Describe the issue, when it started, and any important details."
-          disabled={isSubmitting}
-        />
-
-        {fieldErrors.description ? (
-          <p className="text-xs text-destructive">
-            {fieldErrors.description}
+      <div className="max-w-2xl space-y-5">
+        <div>
+          <h2 className="font-semibold">Service information</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Describe the repair and where the technician should visit.
           </p>
-        ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="request-title">
+            Service request title
+          </Label>
+
+          <Input
+            id="request-title"
+            value={title}
+            aria-invalid={Boolean(fieldErrors.title)}
+            aria-describedby={
+              fieldErrors.title ? "request-title-error" : undefined
+            }
+            onChange={(event) => {
+              setTitle(event.target.value);
+              clearFieldError("title");
+            }}
+            placeholder="Example: Air conditioner is not cooling"
+            disabled={isSubmitting}
+          />
+
+          {fieldErrors.title ? (
+            <p
+              className="text-xs text-destructive"
+              id="request-title-error"
+            >
+              {fieldErrors.title}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="request-description">
+            Describe the problem
+          </Label>
+
+          <Textarea
+            id="request-description"
+            className="min-h-32"
+            value={description}
+            aria-invalid={Boolean(fieldErrors.description)}
+            aria-describedby={
+              fieldErrors.description
+                ? "request-description-error"
+                : undefined
+            }
+            onChange={(event) => {
+              setDescription(event.target.value);
+              clearFieldError("description");
+            }}
+            placeholder="Describe the issue, when it started, and any important details."
+            disabled={isSubmitting}
+          />
+
+          {fieldErrors.description ? (
+            <p
+              className="text-xs text-destructive"
+              id="request-description-error"
+            >
+              {fieldErrors.description}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="service-address">
+            Service address
+          </Label>
+
+          <Textarea
+            id="service-address"
+            className="min-h-24"
+            value={serviceAddress}
+            aria-invalid={Boolean(fieldErrors.service_address)}
+            aria-describedby={
+              fieldErrors.service_address
+                ? "service-address-error"
+                : undefined
+            }
+            onChange={(event) => {
+              setServiceAddress(event.target.value);
+              clearFieldError("service_address");
+            }}
+            placeholder="Enter the address where service is required."
+            disabled={isSubmitting}
+          />
+
+          {fieldErrors.service_address ? (
+            <p
+              className="text-xs text-destructive"
+              id="service-address-error"
+            >
+              {fieldErrors.service_address}
+            </p>
+          ) : null}
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="service-address">
-          Service address
-        </Label>
-
-        <Textarea
-          id="service-address"
-          value={serviceAddress}
-          aria-invalid={Boolean(fieldErrors.service_address)}
-          onChange={(event) => {
-            setServiceAddress(event.target.value);
-            clearFieldError("service_address");
-          }}
-          placeholder="Enter the address where service is required."
+      <div className="flex justify-end border-t pt-6">
+        <Button
+          className="w-full sm:w-auto"
           disabled={isSubmitting}
-        />
-
-        {fieldErrors.service_address ? (
-          <p className="text-xs text-destructive">
-            {fieldErrors.service_address}
-          </p>
-        ) : null}
+          type="submit"
+        >
+          {isSubmitting
+            ? "Submitting request..."
+            : "Submit service request"}
+        </Button>
       </div>
-
-      <Button
-        className="w-full sm:w-auto"
-        type="submit"
-        disabled={isSubmitting}
-      >
-        {isSubmitting
-          ? "Submitting request..."
-          : "Submit service request"}
-      </Button>
     </form>
   );
 }

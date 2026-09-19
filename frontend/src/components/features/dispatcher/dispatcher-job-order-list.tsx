@@ -1,8 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CalendarClock,
   ClipboardList,
@@ -47,14 +43,10 @@ import type { PaginatedCollection } from "@/types/pagination";
 
 const PAGE_SIZE = 10;
 
-type QueueFilter =
-  | "needs_scheduling"
-  | DispatcherQueueStatus;
+type QueueFilter = "needs_scheduling" | DispatcherQueueStatus;
 
 function formatDate(value: string | null) {
-  if (!value) {
-    return "Not scheduled";
-  }
+  if (!value) return "Not scheduled";
 
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
@@ -62,9 +54,7 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function normalizeQueueFilter(
-  value: string | null,
-): QueueFilter {
+function normalizeQueueFilter(value: string | null): QueueFilter {
   if (
     value === "pending_schedule" ||
     value === "pending_technician_response" ||
@@ -77,24 +67,16 @@ function normalizeQueueFilter(
 }
 
 export function DispatcherJobOrderList() {
-  const [jobOrders, setJobOrders] = useState<
-    DispatcherJobOrder[]
-  >([]);
+  const [jobOrders, setJobOrders] = useState<DispatcherJobOrder[]>([]);
   const [pagination, setPagination] =
-    useState<PaginatedCollection<DispatcherJobOrder> | null>(
-      null,
-    );
-  const [filter, setFilter] =
-    useState<QueueFilter>("needs_scheduling");
+    useState<PaginatedCollection<DispatcherJobOrder> | null>(null);
+  const [filter, setFilter] = useState<QueueFilter>("needs_scheduling");
   const [page, setPage] = useState(1);
   const [loadError, setLoadError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   const loadJobOrders = useCallback(
-    async (
-      pageToLoad: number,
-      selectedFilter: QueueFilter,
-    ) => {
+    async (pageToLoad: number, selectedFilter: QueueFilter) => {
       setIsLoading(true);
       setLoadError("");
 
@@ -114,7 +96,6 @@ export function DispatcherJobOrderList() {
           error,
           "Unable to load the scheduling queue.",
         );
-
         setLoadError(details.message);
       } finally {
         setIsLoading(false);
@@ -132,60 +113,69 @@ export function DispatcherJobOrderList() {
   }, [filter, loadJobOrders, page]);
 
   return (
-    <Card>
-      <CardHeader className="flex-col gap-4 border-b sm:flex-row sm:items-center sm:justify-between">
+    <Card className="gap-0 rounded-none py-0 shadow-none">
+      <CardHeader className="flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle>Scheduling queue</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Review customer-selected technicians and assign the
-            official service schedule.
+          <CardTitle className="text-base">Scheduling queue</CardTitle>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            Review the customer&apos;s chosen technician and assign
+            the official service schedule.
           </p>
         </div>
 
-        <Select
-          value={filter}
-          onValueChange={(value) => {
-            setFilter(normalizeQueueFilter(value));
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-full sm:w-64">
-            <SelectValue placeholder="Filter queue" />
-          </SelectTrigger>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void loadJobOrders(page, filter)}
+            disabled={isLoading}
+          >
+            <RefreshCw aria-hidden={true} />
+            Refresh
+          </Button>
 
-          <SelectContent>
-            <SelectItem value="needs_scheduling">
-              Needs scheduling
-            </SelectItem>
-            <SelectItem value="pending_schedule">
-              Pending schedule
-            </SelectItem>
-            <SelectItem value="technician_rejected">
-              Rejected schedules
-            </SelectItem>
-            <SelectItem value="pending_technician_response">
-              Awaiting technician
-            </SelectItem>
-          </SelectContent>
-        </Select>
+          <Select
+            value={filter}
+            onValueChange={(value) => {
+              setFilter(normalizeQueueFilter(value));
+              setPage(1);
+            }}
+          >
+            <SelectTrigger
+              aria-label="Filter scheduling queue"
+              className="w-full sm:w-64"
+            >
+              <SelectValue placeholder="Filter queue" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="needs_scheduling">
+                Needs scheduling
+              </SelectItem>
+              <SelectItem value="pending_schedule">
+                Pending schedule
+              </SelectItem>
+              <SelectItem value="technician_rejected">
+                Rejected schedules
+              </SelectItem>
+              <SelectItem value="pending_technician_response">
+                Awaiting technician
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
 
       <CardContent className="p-0">
         {loadError ? (
           <div className="flex min-h-64 flex-col items-center justify-center gap-4 px-6 text-center">
-            <p
-              className="max-w-md text-sm text-destructive"
-              role="alert"
-            >
+            <p className="max-w-md text-sm text-destructive" role="alert">
               {loadError}
             </p>
-
             <Button
               type="button"
               variant="outline"
-              onClick={() =>
-                void loadJobOrders(page, filter)
-              }
+              onClick={() => void loadJobOrders(page, filter)}
             >
               <RefreshCw aria-hidden={true} />
               Try again
@@ -194,31 +184,40 @@ export function DispatcherJobOrderList() {
         ) : null}
 
         {!loadError && isLoading ? (
-          <div className="space-y-3 p-4">
+          <div aria-label="Loading scheduling queue">
             {Array.from({ length: 5 }, (_, index) => (
-              <Skeleton
-                className="h-28 w-full"
+              <div
+                className="grid gap-4 border-b p-5 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto]"
                 key={index}
-              />
+              >
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-40 rounded-none" />
+                  <Skeleton className="h-5 w-3/4 rounded-none" />
+                  <Skeleton className="h-4 w-1/2 rounded-none" />
+                </div>
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-48 rounded-none" />
+                  <Skeleton className="h-4 w-36 rounded-none" />
+                </div>
+                <Skeleton className="h-8 w-20 rounded-none" />
+              </div>
             ))}
           </div>
         ) : null}
 
-        {!loadError &&
-        !isLoading &&
-        jobOrders.length === 0 ? (
+        {!loadError && !isLoading && jobOrders.length === 0 ? (
           <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <ClipboardList className="size-6 text-muted-foreground" />
+            <div className="flex size-12 items-center justify-center border bg-muted/40">
+              <ClipboardList
+                aria-hidden={true}
+                className="size-5 text-muted-foreground"
+              />
             </div>
-
             <h3 className="mt-4 font-semibold">
               The selected queue is clear
             </h3>
-
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              Scheduling requests matching this filter will
-              appear here.
+            <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
+              Requests matching this filter will appear here.
             </p>
           </div>
         ) : null}
@@ -226,14 +225,14 @@ export function DispatcherJobOrderList() {
         {!loadError && !isLoading
           ? jobOrders.map((jobOrder) => (
               <article
-                className="grid gap-4 border-b p-5 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center"
+                className="grid gap-5 border-b p-5 transition-colors hover:bg-muted/30 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center"
                 key={jobOrder.id}
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <span className="text-xs font-medium tracking-wide text-muted-foreground">
                       {jobOrder.job_order_number}
-                    </p>
+                    </span>
                     <JobOrderStatusBadge
                       status={jobOrder.status}
                     />
@@ -242,28 +241,26 @@ export function DispatcherJobOrderList() {
                     />
                   </div>
 
-                  <h3 className="mt-2 truncate font-semibold">
+                  <h3 className="mt-3 truncate font-semibold">
                     {jobOrder.title}
                   </h3>
-
                   <p className="mt-1 truncate text-sm text-muted-foreground">
                     Customer: {jobOrder.customer.name}
                   </p>
                 </div>
 
-                <div className="space-y-2 text-sm">
-                  <p>
+                <div className="min-w-0 space-y-2 text-sm">
+                  <p className="truncate">
                     <span className="text-muted-foreground">
-                      Technician:{" "}
+                      Chosen technician:{" "}
                     </span>
                     {jobOrder.selected_technician?.name ??
                       "Technician unavailable"}
                   </p>
-
-                  <p className="flex items-center gap-2">
+                  <p className="flex items-center gap-2 text-muted-foreground">
                     <CalendarClock
                       aria-hidden={true}
-                      className="size-4 text-muted-foreground"
+                      className="size-4 shrink-0"
                     />
                     {formatDate(jobOrder.scheduled_at)}
                   </p>
@@ -277,6 +274,7 @@ export function DispatcherJobOrderList() {
                   }
                   size="sm"
                   variant="outline"
+                  className="w-full sm:w-fit"
                 >
                   <Eye aria-hidden={true} />
                   Review
@@ -287,12 +285,11 @@ export function DispatcherJobOrderList() {
       </CardContent>
 
       {pagination && !isLoading && !loadError ? (
-        <div className="flex flex-col gap-4 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-center text-sm text-muted-foreground sm:text-left">
             {pagination.total} request
             {pagination.total === 1 ? "" : "s"} · Page{" "}
-            {pagination.current_page} of{" "}
-            {pagination.last_page}
+            {pagination.current_page} of {pagination.last_page}
           </p>
 
           {pagination.last_page > 1 ? (
@@ -301,9 +298,7 @@ export function DispatcherJobOrderList() {
                 <PaginationItem>
                   <PaginationPrevious
                     href="#"
-                    aria-disabled={
-                      pagination.current_page === 1
-                    }
+                    aria-disabled={pagination.current_page === 1}
                     className={
                       pagination.current_page === 1
                         ? "pointer-events-none opacity-50"
@@ -311,39 +306,30 @@ export function DispatcherJobOrderList() {
                     }
                     onClick={(event) => {
                       event.preventDefault();
-
                       if (pagination.current_page > 1) {
-                        setPage(
-                          pagination.current_page - 1,
-                        );
+                        setPage(pagination.current_page - 1);
                       }
                     }}
                   />
                 </PaginationItem>
-
                 <PaginationItem>
                   <PaginationNext
                     href="#"
                     aria-disabled={
-                      pagination.current_page ===
-                      pagination.last_page
+                      pagination.current_page === pagination.last_page
                     }
                     className={
-                      pagination.current_page ===
-                      pagination.last_page
+                      pagination.current_page === pagination.last_page
                         ? "pointer-events-none opacity-50"
                         : undefined
                     }
                     onClick={(event) => {
                       event.preventDefault();
-
                       if (
                         pagination.current_page <
                         pagination.last_page
                       ) {
-                        setPage(
-                          pagination.current_page + 1,
-                        );
+                        setPage(pagination.current_page + 1);
                       }
                     }}
                   />

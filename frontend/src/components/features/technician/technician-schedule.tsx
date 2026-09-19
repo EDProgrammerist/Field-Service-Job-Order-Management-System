@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -32,10 +33,7 @@ import type { TechnicianJobOrder } from "@/types/technician-job-order";
 
 function toDateInputValue(date: Date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(
-    2,
-    "0",
-  );
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
@@ -49,16 +47,13 @@ function defaultEndDate() {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-PH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
 }
 
-function scheduleRange(
-  fromValue: string,
-  toValue: string,
-) {
+function scheduleRange(fromValue: string, toValue: string) {
   const from = new Date(`${fromValue}T00:00:00`);
   const to = new Date(`${toValue}T23:59:59`);
 
@@ -98,9 +93,7 @@ export function TechnicianSchedule() {
       const range = scheduleRange(fromValue, toValue);
 
       if (!range) {
-        setErrorMessage(
-          "Select a valid schedule range.",
-        );
+        setErrorMessage("Select a valid schedule range.");
         return;
       }
 
@@ -108,9 +101,7 @@ export function TechnicianSchedule() {
       setErrorMessage("");
 
       try {
-        const response = await getTechnicianSchedule(
-          range,
-        );
+        const response = await getTechnicianSchedule(range);
 
         setJobOrders(response.data.job_orders);
         setDisplayRange({
@@ -139,45 +130,43 @@ export function TechnicianSchedule() {
     return () => window.clearTimeout(timeoutId);
   }, [fromDate, loadSchedule, toDate]);
 
-  function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void loadSchedule(fromDate, toDate);
   }
 
   return (
-    <section className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">
-          Technician workspace
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+    <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none">
+      <header>
+        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
           My Schedule
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Review accepted and in-progress work that reserves
-          your service schedule.
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review accepted and in-progress work in your service schedule.
         </p>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader>
+      <Card className="gap-0 rounded-none py-0 shadow-none">
+        <CardHeader className="rounded-none border-b p-5">
           <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="size-5" />
+            <CalendarDays
+              aria-hidden={true}
+              className="size-5"
+            />
             Schedule range
           </CardTitle>
+          <CardDescription>
+            Choose the dates you want to review.
+          </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-5">
           <form
-            className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]"
             onSubmit={handleSubmit}
           >
             <div className="space-y-2">
-              <Label htmlFor="schedule-from">
-                From
-              </Label>
+              <Label htmlFor="schedule-from">From</Label>
               <Input
                 id="schedule-from"
                 type="date"
@@ -190,9 +179,7 @@ export function TechnicianSchedule() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="schedule-to">
-                To
-              </Label>
+              <Label htmlFor="schedule-to">To</Label>
               <Input
                 id="schedule-to"
                 type="date"
@@ -205,9 +192,9 @@ export function TechnicianSchedule() {
             </div>
 
             <Button
-              className="self-end"
-              type="submit"
+              className="w-full self-end sm:col-span-2 lg:col-span-1 lg:w-auto"
               disabled={isLoading}
+              type="submit"
             >
               <RefreshCw aria-hidden={true} />
               {isLoading ? "Loading..." : "Apply range"}
@@ -218,33 +205,40 @@ export function TechnicianSchedule() {
 
       {errorMessage ? (
         <div
-          className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
           role="alert"
         >
           {errorMessage}
         </div>
       ) : null}
 
-      <Card>
-        <CardHeader className="border-b">
+      <Card className="gap-0 rounded-none py-0 shadow-none">
+        <CardHeader className="rounded-none border-b p-5">
           <CardTitle>Scheduled work</CardTitle>
 
-          {displayRange ? (
-            <p className="text-sm text-muted-foreground">
+          {displayRange && !errorMessage ? (
+            <CardDescription>
               {formatDate(displayRange.from)} through{" "}
               {formatDate(displayRange.to)}
-            </p>
+            </CardDescription>
           ) : null}
         </CardHeader>
 
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="space-y-3 p-4">
+          {isLoading && !errorMessage ? (
+            <div
+              aria-label="Loading scheduled work"
+              role="status"
+            >
               {Array.from({ length: 4 }, (_, index) => (
-                <Skeleton
-                  className="h-32 w-full"
+                <div
+                  className="space-y-3 border-b p-5 last:border-b-0"
                   key={index}
-                />
+                >
+                  <Skeleton className="h-4 w-32 rounded-none" />
+                  <Skeleton className="h-5 w-2/3 rounded-none" />
+                  <Skeleton className="h-4 w-full max-w-lg rounded-none" />
+                </div>
               ))}
             </div>
           ) : null}
@@ -252,14 +246,16 @@ export function TechnicianSchedule() {
           {!isLoading &&
           !errorMessage &&
           jobOrders.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center p-6 text-center">
-              <ClipboardList className="size-10 text-muted-foreground" />
-              <h2 className="mt-4 font-semibold">
+            <div className="flex min-h-64 flex-col items-center justify-center p-5 text-center">
+              <ClipboardList
+                aria-hidden={true}
+                className="size-8 text-muted-foreground"
+              />
+              <h2 className="mt-3 font-medium">
                 No scheduled work
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                You have no accepted or in-progress work in
-                this period.
+                You have no accepted or in-progress work in this period.
               </p>
             </div>
           ) : null}
@@ -267,12 +263,12 @@ export function TechnicianSchedule() {
           {!isLoading && !errorMessage
             ? jobOrders.map((jobOrder) => (
                 <article
-                  className="grid gap-4 border-b p-5 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center"
+                  className="flex flex-col gap-4 border-b p-5 last:border-b-0 lg:flex-row lg:items-center lg:justify-between"
                   key={jobOrder.id}
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-medium text-muted-foreground">
+                      <p className="font-mono text-xs text-muted-foreground">
                         {jobOrder.job_order_number}
                       </p>
                       <JobOrderStatusBadge
@@ -283,42 +279,44 @@ export function TechnicianSchedule() {
                       />
                     </div>
 
-                    <h2 className="mt-2 font-semibold">
+                    <h2 className="mt-2 font-medium">
                       {jobOrder.title}
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {jobOrder.customer.name}
+                      Customer: {jobOrder.customer.name}
                     </p>
                   </div>
 
-                  <div className="text-sm">
-                    <p>
-                      {jobOrder.scheduled_at
-                        ? formatDate(jobOrder.scheduled_at)
-                        : "No start time"}
-                    </p>
-                    <p className="mt-1 text-muted-foreground">
-                      to{" "}
-                      {jobOrder.scheduled_end_at
-                        ? formatDate(
-                            jobOrder.scheduled_end_at,
-                          )
-                        : "No end time"}
-                    </p>
-                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:shrink-0">
+                    <div className="text-sm">
+                      <p>
+                        {jobOrder.scheduled_at
+                          ? formatDate(jobOrder.scheduled_at)
+                          : "No start time"}
+                      </p>
+                      <p className="text-muted-foreground">
+                        to{" "}
+                        {jobOrder.scheduled_end_at
+                          ? formatDate(
+                              jobOrder.scheduled_end_at,
+                            )
+                          : "No end time"}
+                      </p>
+                    </div>
 
-                  <Button
-                    render={
-                      <Link
-                        to={`/technician/my-jobs/${jobOrder.id}`}
-                      />
-                    }
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Eye aria-hidden={true} />
-                    View job
-                  </Button>
+                    <Button
+                      render={
+                        <Link
+                          to={`/technician/my-jobs/${jobOrder.id}`}
+                        />
+                      }
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Eye aria-hidden={true} />
+                      View job
+                    </Button>
+                  </div>
                 </article>
               ))
             : null}

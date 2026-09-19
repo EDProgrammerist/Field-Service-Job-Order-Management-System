@@ -1,6 +1,14 @@
 import type { UserRole } from "@/types/auth";
 import type { JobOrderStatus } from "@/types/job-order";
 
+export type ConversationMessagingState =
+  | "active"
+  | "paused"
+  | "finished"
+  | "read_only";
+
+export type ConversationScope = "active" | "all";
+
 export interface ConversationMessage {
   id: number;
   conversation_id: number;
@@ -29,6 +37,8 @@ export interface ConversationParticipant {
 export interface Conversation {
   id: number;
   job_order_id: number;
+  messaging_state: ConversationMessagingState;
+  can_send_messages: boolean;
   unread_messages_count: number;
   created_at: string;
   updated_at: string;

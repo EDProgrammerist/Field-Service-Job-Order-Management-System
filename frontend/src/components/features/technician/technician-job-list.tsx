@@ -1,8 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CalendarClock,
   ClipboardList,
@@ -19,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -39,32 +36,26 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorDetails } from "@/lib/api-errors";
 import { getTechnicianJobOrders } from "@/services/technician-job-orders";
-import type {
-  WorkflowJobOrderStatus,
-} from "@/types/job-order";
+import type { WorkflowJobOrderStatus } from "@/types/job-order";
 import type { PaginatedCollection } from "@/types/pagination";
 import type { TechnicianJobOrder } from "@/types/technician-job-order";
 
 const PAGE_SIZE = 10;
 
-type StatusFilter =
-  | "all"
-  | WorkflowJobOrderStatus;
+type StatusFilter = "all" | WorkflowJobOrderStatus;
 
 function formatDate(value: string | null) {
   if (!value) {
     return "Not scheduled";
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-PH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
 }
 
-function normalizeStatus(
-  value: string | null,
-): StatusFilter {
+function normalizeStatus(value: string | null): StatusFilter {
   if (
     value === "pending_schedule" ||
     value === "pending_technician_response" ||
@@ -137,28 +128,36 @@ export function TechnicianJobList() {
   }, [loadJobs, page, statusFilter]);
 
   return (
-    <section className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">
-          Technician workspace
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          My Jobs
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Review selected requests, respond to official
-          schedules, and update your service work.
-        </p>
-      </div>
+    <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            My Jobs
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Review selected requests, respond to schedules, and
+            follow your service work.
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader className="flex-col gap-4 border-b sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          disabled={isLoading}
+          onClick={() => void loadJobs(page, statusFilter)}
+          type="button"
+          variant="outline"
+        >
+          <RefreshCw aria-hidden={true} />
+          Refresh
+        </Button>
+      </header>
+
+      <Card className="gap-0 rounded-none py-0 shadow-none">
+        <CardHeader className="flex flex-col gap-4 rounded-none border-b p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Job requests</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Only requests where you are the
-              customer-selected technician appear here.
-            </p>
+            <CardDescription className="mt-1">
+              Requests where you are the customer-selected technician.
+            </CardDescription>
           </div>
 
           <Select
@@ -168,23 +167,22 @@ export function TechnicianJobList() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-full sm:w-64">
+            <SelectTrigger
+              aria-label="Filter job requests by status"
+              className="w-full sm:w-64"
+            >
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
 
             <SelectContent>
-              <SelectItem value="all">
-                All requests
-              </SelectItem>
+              <SelectItem value="all">All requests</SelectItem>
               <SelectItem value="pending_schedule">
                 Waiting for schedule
               </SelectItem>
               <SelectItem value="pending_technician_response">
                 Awaiting my response
               </SelectItem>
-              <SelectItem value="accepted">
-                Accepted
-              </SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="technician_rejected">
                 Rejected schedule
               </SelectItem>
@@ -194,9 +192,7 @@ export function TechnicianJobList() {
               <SelectItem value="completed">
                 Completed
               </SelectItem>
-              <SelectItem value="closed">
-                Closed
-              </SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
               <SelectItem value="cancelled">
                 Cancelled
               </SelectItem>
@@ -206,7 +202,7 @@ export function TechnicianJobList() {
 
         <CardContent className="p-0">
           {errorMessage ? (
-            <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-6 text-center">
+            <div className="flex min-h-64 flex-col items-center justify-center gap-4 p-5 text-center">
               <p
                 className="max-w-md text-sm text-destructive"
                 role="alert"
@@ -215,11 +211,11 @@ export function TechnicianJobList() {
               </p>
 
               <Button
-                type="button"
-                variant="outline"
                 onClick={() =>
                   void loadJobs(page, statusFilter)
                 }
+                type="button"
+                variant="outline"
               >
                 <RefreshCw aria-hidden={true} />
                 Try again
@@ -228,12 +224,19 @@ export function TechnicianJobList() {
           ) : null}
 
           {!errorMessage && isLoading ? (
-            <div className="space-y-3 p-4">
-              {Array.from({ length: 5 }, (_, index) => (
-                <Skeleton
-                  className="h-32 w-full"
+            <div
+              aria-label="Loading job requests"
+              role="status"
+            >
+              {Array.from({ length: 4 }, (_, index) => (
+                <div
+                  className="space-y-3 border-b p-5 last:border-b-0"
                   key={index}
-                />
+                >
+                  <Skeleton className="h-4 w-32 rounded-none" />
+                  <Skeleton className="h-5 w-2/3 rounded-none" />
+                  <Skeleton className="h-4 w-full max-w-lg rounded-none" />
+                </div>
               ))}
             </div>
           ) : null}
@@ -241,14 +244,20 @@ export function TechnicianJobList() {
           {!errorMessage &&
           !isLoading &&
           jobOrders.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center p-6 text-center">
-              <ClipboardList className="size-10 text-muted-foreground" />
-              <h2 className="mt-4 font-semibold">
-                No matching requests
+            <div className="flex min-h-64 flex-col items-center justify-center p-5 text-center">
+              <ClipboardList
+                aria-hidden={true}
+                className="size-8 text-muted-foreground"
+              />
+              <h2 className="mt-3 font-medium">
+                {statusFilter === "all"
+                  ? "No job requests yet"
+                  : "No matching requests"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Requests matching the selected status will
-                appear here.
+                {statusFilter === "all"
+                  ? "Customer-selected requests will appear here."
+                  : "Requests matching this status will appear here."}
               </p>
             </div>
           ) : null}
@@ -256,12 +265,12 @@ export function TechnicianJobList() {
           {!errorMessage && !isLoading
             ? jobOrders.map((jobOrder) => (
                 <article
-                  className="grid gap-4 border-b p-5 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center"
+                  className="flex flex-col gap-4 border-b p-5 last:border-b-0 lg:flex-row lg:items-center lg:justify-between"
                   key={jobOrder.id}
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-medium text-muted-foreground">
+                      <p className="font-mono text-xs text-muted-foreground">
                         {jobOrder.job_order_number}
                       </p>
                       <JobOrderStatusBadge
@@ -272,17 +281,22 @@ export function TechnicianJobList() {
                       />
                     </div>
 
-                    <h2 className="mt-2 truncate font-semibold">
+                    <h2 className="mt-2 font-medium">
                       {jobOrder.title}
                     </h2>
 
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {jobOrder.customer.name}
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Customer: {jobOrder.customer.name}
+                    </p>
+
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {jobOrder.service_address ??
+                        "No service address"}
                     </p>
                   </div>
 
-                  <div className="space-y-2 text-sm">
-                    <p className="flex items-center gap-2">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:shrink-0">
+                    <p className="flex items-center gap-2 text-sm">
                       <CalendarClock
                         aria-hidden={true}
                         className="size-4 text-muted-foreground"
@@ -290,33 +304,28 @@ export function TechnicianJobList() {
                       {formatDate(jobOrder.scheduled_at)}
                     </p>
 
-                    <p className="line-clamp-2 text-muted-foreground">
-                      {jobOrder.service_address ??
-                        "No service address"}
-                    </p>
+                    <Button
+                      render={
+                        <Link
+                          to={`/technician/my-jobs/${jobOrder.id}`}
+                        />
+                      }
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Eye aria-hidden={true} />
+                      {jobOrder.allowed_actions.accept
+                        ? "Review schedule"
+                        : "View"}
+                    </Button>
                   </div>
-
-                  <Button
-                    render={
-                      <Link
-                        to={`/technician/my-jobs/${jobOrder.id}`}
-                      />
-                    }
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Eye aria-hidden={true} />
-                    {jobOrder.allowed_actions.accept
-                      ? "Review schedule"
-                      : "View"}
-                  </Button>
                 </article>
               ))
             : null}
         </CardContent>
 
         {pagination && !isLoading && !errorMessage ? (
-          <div className="flex flex-col gap-4 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-center text-sm text-muted-foreground sm:text-left">
               {pagination.total} request
               {pagination.total === 1 ? "" : "s"} · Page{" "}

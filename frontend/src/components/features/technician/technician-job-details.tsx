@@ -1,8 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarClock,
@@ -21,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -42,7 +39,7 @@ function formatDate(value: string | null) {
     return "Not available";
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-PH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -122,45 +119,51 @@ export function TechnicianJobDetails({
 
   if (isLoading) {
     return (
-      <section className="space-y-6">
-        <Skeleton className="h-10 w-40" />
-        <Skeleton className="h-36 w-full" />
-        <Skeleton className="h-80 w-full" />
+      <section
+        aria-label="Loading job details"
+        className="space-y-4"
+        role="status"
+      >
+        <Skeleton className="h-9 w-40 rounded-none" />
+        <Skeleton className="h-28 w-full rounded-none" />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Skeleton className="h-72 rounded-none lg:col-span-2" />
+          <Skeleton className="h-72 rounded-none" />
+        </div>
+        <Skeleton className="h-48 w-full rounded-none" />
       </section>
     );
   }
 
   if (errorMessage || !jobOrder) {
     return (
-      <section className="flex min-h-72 flex-col items-center justify-center gap-4 text-center">
-        <p
-          className="max-w-md text-sm text-destructive"
-          role="alert"
-        >
-          {errorMessage || "Job order not found."}
-        </p>
+      <Card className="mx-auto max-w-xl gap-0 rounded-none py-0 shadow-none">
+        <CardHeader className="rounded-none border-b p-5">
+          <CardTitle>Job unavailable</CardTitle>
+          <CardDescription role="alert">
+            {errorMessage || "Job order not found."}
+          </CardDescription>
+        </CardHeader>
 
-        <div className="flex flex-wrap justify-center gap-2">
+        <CardContent className="flex flex-wrap gap-2 p-5">
           <Button
+            onClick={() => void loadDetails()}
             type="button"
             variant="outline"
-            onClick={() => void loadDetails()}
           >
             <RefreshCw aria-hidden={true} />
             Try again
           </Button>
 
           <Button
+            onClick={() => navigate("/technician/my-jobs")}
             type="button"
-            onClick={() =>
-              navigate("/technician/my-jobs")
-            }
           >
             <ArrowLeft aria-hidden={true} />
             Back to my jobs
           </Button>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -168,9 +171,10 @@ export function TechnicianJobDetails({
   const response = jobOrder.latest_technician_response;
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none">
       <Button
         render={<Link to="/technician/my-jobs" />}
+        size="sm"
         variant="outline"
       >
         <ArrowLeft aria-hidden={true} />
@@ -179,27 +183,27 @@ export function TechnicianJobDetails({
 
       {successMessage ? (
         <div
-          className="flex items-start justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400"
+          className="flex items-start justify-between gap-3 border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400"
           role="status"
         >
           <span>{successMessage}</span>
 
           <Button
             aria-label="Dismiss message"
-            type="button"
-            size="icon-xs"
-            variant="ghost"
             onClick={() => setSuccessMessage("")}
+            size="icon-xs"
+            type="button"
+            variant="ghost"
           >
             <X aria-hidden={true} />
           </Button>
         </div>
       ) : null}
 
-      <div className="flex flex-col justify-between gap-4 border bg-background p-5 lg:flex-row lg:items-start">
-        <div>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               {jobOrder.job_order_number}
             </p>
             <JobOrderStatusBadge status={jobOrder.status} />
@@ -208,11 +212,11 @@ export function TechnicianJobDetails({
             />
           </div>
 
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+          <h1 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
             {jobOrder.title}
           </h1>
 
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             {statusGuidance(jobOrder)}
           </p>
         </div>
@@ -224,57 +228,61 @@ export function TechnicianJobDetails({
                 to={`/conversations/job-orders/${jobOrder.id}`}
               />
             }
+            size="sm"
             variant="outline"
           >
             <MessageCircle aria-hidden={true} />
-            Message customer
+            View conversation
           </Button>
 
           <Button
             render={<Link to="/technician/schedule" />}
+            size="sm"
             variant="outline"
           >
             <CalendarClock aria-hidden={true} />
             View my schedule
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-2">
+          <CardHeader className="rounded-none border-b p-5">
             <CardTitle>Service details</CardTitle>
           </CardHeader>
 
-          <CardContent className="space-y-5 text-sm">
-            <div>
-              <p className="text-muted-foreground">
-                Description
-              </p>
-              <p className="mt-1 whitespace-pre-wrap">
-                {jobOrder.description ??
-                  "No description provided."}
-              </p>
-            </div>
+          <CardContent className="p-5">
+            <dl className="space-y-5 text-sm">
+              <div>
+                <dt className="text-muted-foreground">
+                  Description
+                </dt>
+                <dd className="mt-1 whitespace-pre-wrap">
+                  {jobOrder.description ??
+                    "No description provided."}
+                </dd>
+              </div>
 
-            <div>
-              <p className="text-muted-foreground">
-                Service address
-              </p>
-              <p className="mt-1 whitespace-pre-wrap">
-                {jobOrder.service_address ??
-                  "No service address provided."}
-              </p>
-            </div>
+              <div>
+                <dt className="text-muted-foreground">
+                  Service address
+                </dt>
+                <dd className="mt-1 whitespace-pre-wrap">
+                  {jobOrder.service_address ??
+                    "No service address provided."}
+                </dd>
+              </div>
+            </dl>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="gap-0 rounded-none py-0 shadow-none">
+          <CardHeader className="rounded-none border-b p-5">
             <CardTitle>Customer</CardTitle>
           </CardHeader>
 
-          <CardContent className="space-y-3 text-sm">
+          <CardContent className="space-y-3 p-5 text-sm">
             <p className="font-medium">
               {jobOrder.customer.name}
             </p>
@@ -290,56 +298,59 @@ export function TechnicianJobDetails({
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
+        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-2">
+          <CardHeader className="rounded-none border-b p-5">
             <CardTitle>Official schedule</CardTitle>
           </CardHeader>
 
-          <CardContent className="grid gap-5 text-sm sm:grid-cols-2">
-            <div>
-              <p className="text-muted-foreground">
-                Starts
-              </p>
-              <p className="mt-1 font-medium">
-                {formatDate(jobOrder.scheduled_at)}
-              </p>
-            </div>
+          <CardContent className="p-5">
+            <dl className="grid gap-5 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-muted-foreground">
+                  Starts
+                </dt>
+                <dd className="mt-1 font-medium">
+                  {formatDate(jobOrder.scheduled_at)}
+                </dd>
+              </div>
 
-            <div>
-              <p className="text-muted-foreground">
-                Ends
-              </p>
-              <p className="mt-1 font-medium">
-                {formatDate(jobOrder.scheduled_end_at)}
-              </p>
-            </div>
+              <div>
+                <dt className="text-muted-foreground">
+                  Ends
+                </dt>
+                <dd className="mt-1 font-medium">
+                  {formatDate(jobOrder.scheduled_end_at)}
+                </dd>
+              </div>
 
-            <div>
-              <p className="text-muted-foreground">
-                Schedule version
-              </p>
-              <p className="mt-1">
-                {jobOrder.schedule_version || "Not scheduled"}
-              </p>
-            </div>
+              <div>
+                <dt className="text-muted-foreground">
+                  Schedule version
+                </dt>
+                <dd className="mt-1">
+                  {jobOrder.schedule_version ||
+                    "Not scheduled"}
+                </dd>
+              </div>
 
-            <div>
-              <p className="text-muted-foreground">
-                Dispatcher remarks
-              </p>
-              <p className="mt-1 whitespace-pre-wrap">
-                {revision?.remarks ?? "No remarks"}
-              </p>
-            </div>
+              <div>
+                <dt className="text-muted-foreground">
+                  Dispatcher remarks
+                </dt>
+                <dd className="mt-1 whitespace-pre-wrap">
+                  {revision?.remarks ?? "No remarks"}
+                </dd>
+              </div>
+            </dl>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="gap-0 rounded-none py-0 shadow-none">
+          <CardHeader className="rounded-none border-b p-5">
             <CardTitle>Latest response</CardTitle>
           </CardHeader>
 
-          <CardContent className="space-y-3 text-sm">
+          <CardContent className="space-y-3 p-5 text-sm">
             {response ? (
               <>
                 <p className="font-medium capitalize">
@@ -369,9 +380,7 @@ export function TechnicianJobDetails({
             setJobOrder(updatedJobOrder);
             setSuccessMessage(message);
 
-            void getTechnicianJobOrderHistory(
-              jobOrderId,
-            )
+            void getTechnicianJobOrderHistory(jobOrderId)
               .then((historyResponse) => {
                 setHistory(historyResponse.data);
               })
@@ -379,30 +388,30 @@ export function TechnicianJobDetails({
           }}
         />
 
-        <Card className="lg:col-span-3">
-          <CardHeader>
+        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-3">
+          <CardHeader className="rounded-none border-b p-5">
             <CardTitle>Job history</CardTitle>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="p-0">
             {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="p-5 text-sm text-muted-foreground">
                 No status history is available.
               </p>
             ) : (
-              <ol className="space-y-4">
+              <ol className="divide-y">
                 {history.map((entry) => (
-                  <li
-                    className="border-l-2 border-primary/30 pl-4 text-sm"
-                    key={entry.id}
-                  >
+                  <li className="p-5 text-sm" key={entry.id}>
                     <div className="flex flex-wrap items-center gap-2">
                       <JobOrderStatusBadge
                         status={entry.status}
                       />
-                      <span className="text-muted-foreground">
+                      <time
+                        className="text-xs text-muted-foreground"
+                        dateTime={entry.created_at}
+                      >
                         {formatDate(entry.created_at)}
-                      </span>
+                      </time>
                     </div>
 
                     <p className="mt-2">

@@ -1,5 +1,9 @@
-import { DashboardLayout } from "@/components/common/dashboard-layout";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router";
+
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
 import { CustomerServiceRequestForm } from "@/components/features/customers/customer-service-request-form";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,27 +14,30 @@ import {
 
 export default function CustomerNewServiceRequestPage() {
   return (
-    <DashboardLayout>
-      <section className="mx-auto max-w-3xl space-y-6">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            Customer workspace
-          </p>
+    <DashboardShell>
+      <section className="mx-auto max-w-5xl space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none">
+        <Button
+          render={<Link to="/customer/service-requests" />}
+          size="sm"
+          variant="outline"
+        >
+          <ArrowLeft aria-hidden={true} />
+          Back to My Requests
+        </Button>
 
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+        <header>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
             Submit a service request
           </h1>
-
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Choose your preferred technician and tell us what needs
             repair.
           </p>
-        </div>
+        </header>
 
-        <Card>
-          <CardHeader>
+        <Card className="gap-0 rounded-none py-0 shadow-none">
+          <CardHeader className="rounded-none border-b p-5">
             <CardTitle>Request details</CardTitle>
-
             <CardDescription>
               Your request starts as Pending Schedule. A dispatcher
               will assign the official service time for your selected
@@ -38,11 +45,11 @@ export default function CustomerNewServiceRequestPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="p-5">
             <CustomerServiceRequestForm />
           </CardContent>
         </Card>
       </section>
-    </DashboardLayout>
+    </DashboardShell>
   );
 }
