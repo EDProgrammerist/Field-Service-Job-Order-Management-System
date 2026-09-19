@@ -1,6 +1,7 @@
 import {
   ClipboardList,
   LayoutDashboard,
+  MessageCircle,
   UsersRound,
   Wrench,
   type LucideIcon,
@@ -103,6 +104,12 @@ const navigationByRole: Record<UserRole, NavigationItem[]> = {
     },
 
     {
+      label: "Conversations",
+      href: "/conversations",
+      icon: MessageCircle,
+    },
+
+    {
       label: "My Requests",
       href: "/customer/service-requests",
       icon: ClipboardList,
@@ -160,8 +167,12 @@ export function AppSidebar() {
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
-                    isActive={location.pathname === item.href}
                     render={<Link to={item.href} />}
+                    isActive={
+                      location.pathname === item.href ||
+                      (item.href === "/conversations" &&
+                        location.pathname.startsWith("/conversations/"))
+                    }
                   >
                     <item.icon aria-hidden="true" />
                     <span>{item.label}</span>

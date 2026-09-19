@@ -1,10 +1,10 @@
-import { DashboardLayout } from "@/components/common/dashboard-layout";
-import { TechnicianMyJobs } from "@/components/features/job-orders/technician-my-jobs";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
+import { TechnicianJobList } from "@/components/features/technician/technician-job-list";
 
 export default function TechnicianMyJobsPage() {
   return (
-    <DashboardLayout>
-      <TechnicianMyJobs />
-    </DashboardLayout>
+    <DashboardShell>
+      <TechnicianJobList />
+    </DashboardShell>
   );
 }

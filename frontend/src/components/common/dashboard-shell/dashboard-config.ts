@@ -1,10 +1,12 @@
 import {
+  CalendarDays,
   ClipboardList,
   FilePlus2,
   LayoutDashboard,
   ShieldCheck,
   UsersRound,
   Wrench,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -226,6 +228,20 @@ export const dashboardRoleConfigs: Record<
             icon: ClipboardList,
             matchNested: true,
           },
+
+          {
+            label: "Conversations",
+            href: "/conversations",
+            icon: MessageCircle,
+            matchNested: true,
+          },
+
+          {
+            label: "My Schedule",
+            href: "/technician/schedule",
+            icon: CalendarDays,
+            exact: true,
+          },
         ],
       },
     ],
@@ -272,6 +288,13 @@ export const dashboardRoleConfigs: Record<
             href: "/customer/service-requests/new",
             icon: FilePlus2,
             exact: true,
+          },
+
+          {
+            label: "Conversations",
+            href: "/conversations",
+            icon: MessageCircle,
+            matchNested: true,
           },
           {
             label: "My Requests",
@@ -334,6 +357,28 @@ export function getDashboardPageInformation(
   role: UserRole,
   pathname: string,
 ): DashboardPageInformation {
+  if (
+    role === "customer" ||
+    role === "technician"
+  ) {
+    if (pathname === "/conversations") {
+      return {
+        eyebrow: "Messages",
+        title: "Conversations",
+      };
+    }
+
+    if (
+      pathname.startsWith(
+        "/conversations/job-orders/",
+      )
+    ) {
+      return {
+        eyebrow: "Messages",
+        title: "Conversation",
+      };
+    }
+  }
   if (role === "admin") {
     if (pathname === "/admin/dashboard") {
       return {
@@ -433,6 +478,13 @@ export function getDashboardPageInformation(
       return {
         eyebrow: "Field Workspace",
         title: "Dashboard",
+      };
+    }
+
+    if (pathname === "/technician/schedule") {
+      return {
+        eyebrow: "Work",
+        title: "My Schedule",
       };
     }
 

@@ -24,7 +24,10 @@ import TechnicianMyJobsPage from "@/pages/technician/my-jobs";
 import CustomerServiceRequestsPage from "@/pages/customer/service-requests";
 import CustomerServiceRequestDetailsPage from "@/pages/customer/service-requests/details";
 import DispatcherScheduleJobOrderPage from "@/pages/dispatcher/job-orders/schedule";
+import TechnicianSchedulePage from "@/pages/technician/schedule";
 import HomePage from "@/pages/home";
+import ConversationsPage from "@/pages/conversations";
+import JobOrderConversationPage from "@/pages/conversations/job-order";
 
 export function AppRoutes() {
   return (
@@ -133,6 +136,27 @@ export function AppRoutes() {
       />
 
       <Route
+        path="/conversations"
+        element={
+          <ProtectedRoute
+            allowedRoles={["customer", "technician"]}
+          >
+            <ConversationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/conversations/job-orders/:jobOrderId"
+        element={
+          <ProtectedRoute
+            allowedRoles={["customer", "technician"]}
+          >
+            <JobOrderConversationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/dispatcher/dashboard"
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
@@ -157,14 +181,6 @@ export function AppRoutes() {
         }
       />
       <Route
-        path="/dispatcher/job-orders"
-        element={
-          <ProtectedRoute allowedRoles={["dispatcher"]}>
-            <DispatcherJobOrdersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/dispatcher/job-orders/:jobOrderId/schedule"
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
@@ -177,6 +193,15 @@ export function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["dispatcher"]}>
             <DispatcherJobOrderDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/technician/schedule"
+        element={
+          <ProtectedRoute allowedRoles={["technician"]}>
+            <TechnicianSchedulePage />
           </ProtectedRoute>
         }
       />

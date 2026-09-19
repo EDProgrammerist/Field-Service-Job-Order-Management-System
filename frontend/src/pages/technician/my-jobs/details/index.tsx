@@ -1,19 +1,24 @@
 import { useParams } from "react-router";
 
-import { DashboardLayout } from "@/components/common/dashboard-layout";
-import { TechnicianJobOrderDetails } from "@/components/features/job-orders/technician-job-order-details";
+import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
+import { TechnicianJobDetails } from "@/components/features/technician/technician-job-details";
 
 export default function TechnicianJobOrderDetailsPage() {
   const { jobOrderId } = useParams();
   const parsedJobOrderId = Number(jobOrderId);
 
-  if (!Number.isInteger(parsedJobOrderId) || parsedJobOrderId < 1) {
+  if (
+    !Number.isInteger(parsedJobOrderId) ||
+    parsedJobOrderId < 1
+  ) {
     return null;
   }
 
   return (
-    <DashboardLayout>
-      <TechnicianJobOrderDetails jobOrderId={parsedJobOrderId} />
-    </DashboardLayout>
+    <DashboardShell>
+      <TechnicianJobDetails
+        jobOrderId={parsedJobOrderId}
+      />
+    </DashboardShell>
   );
 }

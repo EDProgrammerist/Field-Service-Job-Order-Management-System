@@ -225,19 +225,19 @@ export function CustomerServiceRequestDetails({
               <ol className="space-y-4">
                 {request.status_histories.map((history) => (
                   <li
-                    key={history.id}
-                    className="border-l-2 border-primary/30 pl-4 text-sm"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <JobOrderStatusBadge status={history.status} />
-                      <span className="text-muted-foreground">
-                        {formatDate(history.created_at)}
-                      </span>
-                    </div>
+  key={history.id}
+  className="border-l-2 border-primary/30 pl-4 text-sm"
+>
+  <div className="flex flex-wrap items-center gap-2">
+    <JobOrderStatusBadge status={history.status} />
+    <span className="text-muted-foreground">
+      {formatDate(history.created_at)}
+    </span>
+  </div>
 
-                    <p className="mt-2">
-                      Updated by {history.changed_by.name}
-                    </p>
+  <p className="mt-2">
+    Updated by {history.changed_by.name}
+  </p>
 
                     {history.remarks ? (
                       <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
