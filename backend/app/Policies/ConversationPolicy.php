@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Conversation;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 
 class ConversationPolicy
 {
@@ -56,6 +57,15 @@ class ConversationPolicy
                 ['customer', 'technician'],
                 true
             )
+        ) {
+            return false;
+        }
+
+        $jobOrder = $conversation->jobOrder;
+
+        if (
+            ! $jobOrder
+            || ! Gate::forUser($user)->allows('useConversation', $jobOrder)
         ) {
             return false;
         }

@@ -1,20 +1,11 @@
-import type { JobOrder } from "@/types/job-order";
+import type { AdminJobOrder } from "@/types/admin-job-order";
 
 export interface AdminDashboardData {
   totalJobOrders: number;
-  createdJobOrders: number;
+  pendingScheduleJobOrders: number;
   inProgressJobOrders: number;
   completedJobOrders: number;
   totalCustomers: number;
   totalTechnicians: number;
-  recentJobOrders: JobOrder[];
-}
-
-export interface DispatcherDashboardData {
-  unassignedJobOrderCount: number;
-  assignedJobOrderCount: number;
-  activeJobOrderCount: number;
-  activeTechnicianCount: number;
-  unassignedJobOrders: JobOrder[];
-  recentJobOrders: JobOrder[];
+  recentJobOrders: AdminJobOrder[];
 }

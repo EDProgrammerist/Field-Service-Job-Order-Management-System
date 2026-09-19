@@ -38,6 +38,11 @@ class ConversationWorkflowTest extends TestCase
 
         $jobOrderId = $response->json('data.id');
 
+        $this->assertDatabaseHas('job_orders', [
+            'id' => $jobOrderId,
+            'status' => 'pending_schedule',
+        ]);
+
         $conversation = Conversation::query()
             ->where('job_order_id', $jobOrderId)
             ->firstOrFail();
@@ -50,6 +55,11 @@ class ConversationWorkflowTest extends TestCase
                 'participant_role' => 'customer',
             ]
         );
+
+        $this->postJson(
+            "/api/conversations/{$conversation->id}/messages",
+            ['body' => 'The request has just been submitted.']
+        )->assertCreated();
 
         $this->assertDatabaseHas(
             'conversation_participants',
@@ -307,6 +317,334 @@ class ConversationWorkflowTest extends TestCase
             'conversation_participants',
             2
         );
+    }
+
+    public function test_rejection_pauses_and_rescheduling_resumes_the_same_conversation(): void
+    {
+        [$customerUser, $customer] = $this->createCustomer();
+        $technician = $this->createTechnician();
+        $dispatcher = User::factory()->create(['role' => 'dispatcher']);
+        $jobOrder = $this->createJobOrder($customerUser, $customer, $technician);
+
+        Sanctum::actingAs($customerUser);
+
+        $conversationId = $this->getJson(
+            "/api/job-orders/{$jobOrder->id}/conversation"
+        )->assertOk()
+            ->assertJsonPath('data.messaging_state', 'active')
+            ->json('data.id');
+
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'Please call before arriving.']
+        )->assertCreated();
+
+        $start = now()->addDays(3)->startOfHour();
+        Sanctum::actingAs($dispatcher);
+
+        $this->patchJson(
+            "/api/dispatcher/job-orders/{$jobOrder->id}/schedule",
+            [
+                'scheduled_at' => $start->toIso8601String(),
+                'scheduled_end_at' => $start->copy()->addHour()->toIso8601String(),
+            ]
+        )->assertOk()->assertJsonPath('data.schedule_version', 1);
+
+        Sanctum::actingAs($technician->user);
+
+        $this->postJson(
+            "/api/technician/job-orders/{$jobOrder->id}/reject",
+            [
+                'schedule_version' => 1,
+                'reason' => 'Unavailable at that time.',
+            ]
+        )->assertOk()->assertJsonPath('data.status', 'technician_rejected');
+
+        $this->getJson('/api/conversations')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.data');
+
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'This must be blocked.']
+        )->assertStatus(409)
+            ->assertJsonPath('code', 'MESSAGING_UNAVAILABLE');
+
+        Sanctum::actingAs($customerUser);
+
+        $this->getJson('/api/conversations')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.data');
+
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'This must also be blocked.']
+        )->assertStatus(409)
+            ->assertJsonPath('code', 'MESSAGING_UNAVAILABLE')
+            ->assertJsonPath(
+                'message',
+                'Messaging is paused until the dispatcher reschedules this request.'
+            );
+
+        $this->getJson("/api/conversations/{$conversationId}")
+            ->assertOk()
+            ->assertJsonPath('data.messaging_state', 'paused')
+            ->assertJsonPath('data.can_send_messages', false);
+
+        $this->getJson("/api/conversations/{$conversationId}/messages")
+            ->assertOk()
+            ->assertJsonPath('data.data.0.body', 'Please call before arriving.');
+
+        $this->getJson('/api/conversations?scope=all')
+            ->assertOk()
+            ->assertJsonPath('data.data.0.id', $conversationId);
+
+        $nextStart = $start->copy()->addDays(2);
+        Sanctum::actingAs($dispatcher);
+
+        $this->patchJson(
+            "/api/dispatcher/job-orders/{$jobOrder->id}/schedule",
+            [
+                'scheduled_at' => $nextStart->toIso8601String(),
+                'scheduled_end_at' => $nextStart->copy()->addHour()->toIso8601String(),
+            ]
+        )->assertOk()
+            ->assertJsonPath('data.status', 'pending_technician_response')
+            ->assertJsonPath('data.schedule_version', 2);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->getJson('/api/conversations')
+            ->assertOk()
+            ->assertJsonPath('data.data.0.id', $conversationId)
+            ->assertJsonPath('data.data.0.can_send_messages', true);
+
+        Sanctum::actingAs($technician->user);
+
+        $this->getJson('/api/conversations')
+            ->assertOk()
+            ->assertJsonPath('data.data.0.id', $conversationId);
+
+        Sanctum::actingAs($customerUser);
+
+        $this->getJson("/api/job-orders/{$jobOrder->id}/conversation")
+            ->assertOk()
+            ->assertJsonPath('data.id', $conversationId);
+
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'The new time works.']
+        )->assertCreated();
+
+        $this->assertDatabaseCount('conversations', 1);
+        $this->assertDatabaseCount('conversation_messages', 2);
+        $this->assertDatabaseCount('conversation_participants', 2);
+    }
+
+    public function test_completed_and_closed_work_remains_read_only(): void
+    {
+        [$customerUser, $customer] = $this->createCustomer();
+        $technician = $this->createTechnician();
+        $dispatcher = User::factory()->create(['role' => 'dispatcher']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $jobOrder = $this->createJobOrder($customerUser, $customer, $technician);
+
+        Sanctum::actingAs($customerUser);
+        $conversationId = $this->getJson(
+            "/api/job-orders/{$jobOrder->id}/conversation"
+        )->assertOk()->json('data.id');
+
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'Original message.']
+        )->assertCreated();
+
+        $start = now()->addDays(3)->startOfHour();
+        Sanctum::actingAs($dispatcher);
+        $this->patchJson(
+            "/api/dispatcher/job-orders/{$jobOrder->id}/schedule",
+            [
+                'scheduled_at' => $start->toIso8601String(),
+                'scheduled_end_at' => $start->copy()->addHour()->toIso8601String(),
+            ]
+        )->assertOk();
+
+        Sanctum::actingAs($technician->user);
+        $this->postJson(
+            "/api/technician/job-orders/{$jobOrder->id}/accept",
+            ['schedule_version' => 1]
+        )->assertOk();
+        $this->postJson("/api/technician/job-orders/{$jobOrder->id}/start")
+            ->assertOk();
+        $this->postJson("/api/technician/job-orders/{$jobOrder->id}/complete")
+            ->assertOk()->assertJsonPath('data.status', 'completed');
+
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'After completion.']
+        )->assertStatus(409)
+            ->assertJsonPath('code', 'MESSAGING_UNAVAILABLE');
+
+        $this->getJson('/api/conversations')
+            ->assertOk()->assertJsonCount(0, 'data.data');
+        $this->getJson("/api/conversations/{$conversationId}/messages")
+            ->assertOk()->assertJsonPath('data.data.0.body', 'Original message.');
+
+        Sanctum::actingAs($admin);
+        $this->patchJson(
+            "/api/job-orders/{$jobOrder->id}/status",
+            ['status' => 'closed']
+        )->assertOk()->assertJsonPath('data.job_order.status', 'closed');
+
+        Sanctum::actingAs($customerUser);
+        $this->getJson('/api/conversations')
+            ->assertOk()->assertJsonCount(0, 'data.data');
+        $this->getJson('/api/conversations?scope=all')
+            ->assertOk()->assertJsonPath('data.data.0.messaging_state', 'finished');
+        $this->getJson("/api/conversations/{$conversationId}/messages")
+            ->assertOk()->assertJsonPath('data.data.0.body', 'Original message.');
+        $this->patchJson("/api/conversations/{$conversationId}/read")
+            ->assertOk();
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'After closure.']
+        )->assertStatus(409)
+            ->assertJsonPath('code', 'MESSAGING_UNAVAILABLE');
+
+        $this->assertDatabaseCount('conversation_messages', 1);
+
+        Sanctum::actingAs($admin);
+        $this->getJson("/api/conversations/{$conversationId}/messages")
+            ->assertForbidden();
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'Administrator must not join.']
+        )->assertForbidden();
+    }
+
+    public function test_cancelled_request_keeps_readable_history_but_blocks_sending(): void
+    {
+        [$customerUser, $customer] = $this->createCustomer();
+        $technician = $this->createTechnician();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $jobOrder = $this->createJobOrder($customerUser, $customer, $technician);
+
+        Sanctum::actingAs($customerUser);
+        $conversationId = $this->getJson(
+            "/api/job-orders/{$jobOrder->id}/conversation"
+        )->assertOk()->json('data.id');
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'Saved before cancellation.']
+        )->assertCreated();
+
+        Sanctum::actingAs($admin);
+        $this->patchJson(
+            "/api/job-orders/{$jobOrder->id}/status",
+            ['status' => 'cancelled']
+        )->assertOk();
+
+        foreach ([$customerUser, $technician->user] as $participant) {
+            Sanctum::actingAs($participant);
+            $this->getJson("/api/conversations/{$conversationId}/messages")
+                ->assertOk()
+                ->assertJsonPath('data.data.0.body', 'Saved before cancellation.');
+            $this->postJson(
+                "/api/conversations/{$conversationId}/messages",
+                ['body' => 'After cancellation.']
+            )->assertStatus(409)
+                ->assertJsonPath('code', 'MESSAGING_UNAVAILABLE');
+        }
+
+        $this->getJson('/api/conversations')
+            ->assertOk()->assertJsonCount(0, 'data.data');
+        $this->assertDatabaseCount('conversation_messages', 1);
+    }
+
+    public function test_terminal_history_prevents_reopening_and_legacy_statuses_are_read_only(): void
+    {
+        [$customerUser, $customer] = $this->createCustomer();
+        $technician = $this->createTechnician();
+        $jobOrder = $this->createJobOrder($customerUser, $customer, $technician);
+
+        Sanctum::actingAs($customerUser);
+        $conversationId = $this->getJson(
+            "/api/job-orders/{$jobOrder->id}/conversation"
+        )->assertOk()->json('data.id');
+
+        $jobOrder->statusHistories()->create([
+            'previous_status' => 'in_progress',
+            'status' => 'completed',
+            'action' => 'technician_completed',
+            'changed_by' => $technician->user_id,
+        ]);
+
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'Should stay closed.']
+        )->assertStatus(409);
+
+        $this->getJson('/api/conversations')
+            ->assertOk()->assertJsonCount(0, 'data.data');
+
+        $jobOrder->update(['status' => 'assigned']);
+
+        $this->getJson("/api/conversations/{$conversationId}")
+            ->assertOk()
+            ->assertJsonPath('data.messaging_state', 'finished');
+
+        $legacyJobOrder = $this->createJobOrder(
+            $customerUser,
+            $customer,
+            $technician
+        );
+        $legacyJobOrder->update(['status' => 'assigned']);
+        $legacyConversationId = $this->getJson(
+            "/api/job-orders/{$legacyJobOrder->id}/conversation"
+        )->assertOk()->json('data.id');
+
+        $this->getJson("/api/conversations/{$legacyConversationId}")
+            ->assertOk()
+            ->assertJsonPath('data.messaging_state', 'read_only');
+
+        $this->postJson(
+            "/api/conversations/{$legacyConversationId}/messages",
+            ['body' => 'Legacy statuses cannot send.']
+        )->assertStatus(409)
+            ->assertJsonPath('code', 'MESSAGING_UNAVAILABLE');
+
+        $this->getJson('/api/conversations?scope=all')
+            ->assertOk()->assertJsonCount(2, 'data.data');
+    }
+
+    public function test_a_stale_participant_cannot_bypass_current_ownership(): void
+    {
+        [$customerUser, $customer] = $this->createCustomer();
+        $technician = $this->createTechnician();
+        [$otherCustomerUser] = $this->createCustomer();
+        $jobOrder = $this->createJobOrder($customerUser, $customer, $technician);
+
+        Sanctum::actingAs($customerUser);
+        $conversationId = $this->getJson(
+            "/api/job-orders/{$jobOrder->id}/conversation"
+        )->assertOk()->json('data.id');
+
+        Conversation::findOrFail($conversationId)
+            ->participants()
+            ->attach($otherCustomerUser->id, ['participant_role' => 'customer']);
+
+        Sanctum::actingAs($otherCustomerUser);
+
+        $this->getJson('/api/conversations')
+            ->assertOk()->assertJsonCount(0, 'data.data');
+        $this->getJson("/api/conversations/{$conversationId}")
+            ->assertForbidden();
+        $this->getJson("/api/conversations/{$conversationId}/messages")
+            ->assertForbidden();
+        $this->postJson(
+            "/api/conversations/{$conversationId}/messages",
+            ['body' => 'Unauthorized.']
+        )->assertForbidden();
     }
 
     /**

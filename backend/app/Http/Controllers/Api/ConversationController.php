@@ -12,6 +12,7 @@ use App\Services\JobOrderConversationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class ConversationController extends Controller
 {
@@ -20,6 +21,10 @@ class ConversationController extends Controller
         Gate::authorize('viewAny', Conversation::class);
 
         $validated = $request->validate([
+            'scope' => [
+                'nullable',
+                Rule::in(['active', 'all']),
+            ],
             'per_page' => [
                 'nullable',
                 'integer',
@@ -35,6 +40,35 @@ class ConversationController extends Controller
                 'participants',
                 fn ($query) =>
                     $query->where('users.id', $user->id)
+            )
+            ->whereHas(
+                'jobOrder',
+                fn ($query) => $user->role === 'customer'
+                    ? $query->where('customer_id', $user->customer?->id ?? 0)
+                    : $query->where(
+                        'selected_technician_id',
+                        $user->technician?->id ?? 0
+                    )
+            )
+            ->when(
+                ($validated['scope'] ?? 'active') === 'active',
+                fn ($query) => $query->whereHas(
+                    'jobOrder',
+                    fn ($jobQuery) => $jobQuery
+                        ->whereIn(
+                            'status',
+                            JobOrder::CONVERSATION_MESSAGING_STATUSES
+                        )
+                        ->whereNull('completed_at')
+                        ->whereNull('closed_at')
+                        ->whereDoesntHave(
+                            'statusHistories',
+                            fn ($historyQuery) => $historyQuery->whereIn(
+                                'status',
+                                JobOrder::CONVERSATION_TERMINAL_STATUSES
+                            )
+                        )
+                )
             )
             ->with($this->relations())
             ->withCount([

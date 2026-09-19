@@ -7,7 +7,9 @@ use App\Models\ConversationMessage;
 use App\Models\JobOrder;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class JobOrderConversationService
@@ -79,14 +81,41 @@ class JobOrderConversationService
             $sender,
             $body
         ): ConversationMessage {
+            /*
+             * Status transitions lock this same job-order row. Lock it first
+             * so a rejection, reschedule, completion, or cancellation cannot
+             * race past the final send check.
+             */
+            $lockedJobOrder = JobOrder::query()
+                ->lockForUpdate()
+                ->findOrFail($conversation->job_order_id);
+
             $lockedConversation = Conversation::query()
                 ->lockForUpdate()
                 ->findOrFail($conversation->id);
+
+            $lockedConversation->setRelation('jobOrder', $lockedJobOrder);
 
             $this->ensureParticipant(
                 $lockedConversation,
                 $sender
             );
+
+            $messagingState = $lockedJobOrder->conversationMessagingState();
+
+            if ($messagingState !== 'active') {
+                $message = match ($messagingState) {
+                    'paused' => 'Messaging is paused until the dispatcher reschedules this request.',
+                    'finished' => 'Messaging is permanently closed for this request.',
+                    default => 'Messaging is unavailable for this legacy request.',
+                };
+
+                throw new HttpResponseException(response()->json([
+                    'message' => $message,
+                    'code' => 'MESSAGING_UNAVAILABLE',
+                    'errors' => ['conversation' => [$message]],
+                ], 409));
+            }
 
             $message = $lockedConversation
                 ->messages()
@@ -157,12 +186,7 @@ class JobOrderConversationService
         Conversation $conversation,
         User $user
     ): void {
-        $isParticipant = $conversation
-            ->participants()
-            ->where('users.id', $user->id)
-            ->exists();
-
-        if (! $isParticipant) {
+        if (! Gate::forUser($user)->allows('view', $conversation)) {
             throw new AuthorizationException(
                 'Only conversation participants may perform this action.'
             );

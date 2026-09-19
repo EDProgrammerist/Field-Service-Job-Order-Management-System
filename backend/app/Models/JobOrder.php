@@ -55,6 +55,21 @@ class JobOrder extends Model
         'assigned',
     ];
 
+    /** Only statuses in the new workflow permit conversation messages. */
+    public const CONVERSATION_MESSAGING_STATUSES = [
+        'pending_schedule',
+        'pending_technician_response',
+        'accepted',
+        'in_progress',
+    ];
+
+    /** A terminal event closes messaging permanently, even if status drifts. */
+    public const CONVERSATION_TERMINAL_STATUSES = [
+        'completed',
+        'closed',
+        'cancelled',
+    ];
+
     /**
      * Legacy statuses remain active until Phase 3 changes the workflow.
      */
@@ -166,6 +181,28 @@ class JobOrder extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(JobOrderStatusHistory::class);
+    }
+
+    public function conversationMessagingState(): string
+    {
+        if (
+            in_array($this->status, self::CONVERSATION_TERMINAL_STATUSES, true)
+            || $this->completed_at !== null
+            || $this->closed_at !== null
+            || $this->statusHistories()
+                ->whereIn('status', self::CONVERSATION_TERMINAL_STATUSES)
+                ->exists()
+        ) {
+            return 'finished';
+        }
+
+        if ($this->status === 'technician_rejected') {
+            return 'paused';
+        }
+
+        return in_array($this->status, self::CONVERSATION_MESSAGING_STATUSES, true)
+            ? 'active'
+            : 'read_only';
     }
 
     /**

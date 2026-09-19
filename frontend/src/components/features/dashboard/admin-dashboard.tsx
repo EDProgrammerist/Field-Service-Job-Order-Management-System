@@ -259,8 +259,8 @@ export function AdminDashboard() {
 
     return [
       {
-        label: "Awaiting assignment",
-        value: dashboard.createdJobOrders,
+        label: "Pending schedule",
+        value: dashboard.pendingScheduleJobOrders,
         className: "bg-slate-700",
       },
       {
@@ -350,7 +350,7 @@ export function AdminDashboard() {
 
             <p className="mt-1 text-sm text-muted-foreground">
               {dashboard.inProgressJobOrders.toLocaleString()} active jobs and{" "}
-              {dashboard.createdJobOrders.toLocaleString()} waiting for
+              {dashboard.pendingScheduleJobOrders.toLocaleString()} waiting for
               assignment.
             </p>
           </div>
@@ -516,11 +516,11 @@ export function AdminDashboard() {
         </DashboardCard>
 
         <MetricCard
-          description="New job orders that are ready for administrative review."
+          description="Customer requests awaiting an official dispatcher schedule."
           href="/admin/job-orders"
           icon={Clock3}
-          label="Awaiting assignment"
-          value={dashboard.createdJobOrders}
+          label="Pending schedule"
+          value={dashboard.pendingScheduleJobOrders}
         />
 
         <MetricCard

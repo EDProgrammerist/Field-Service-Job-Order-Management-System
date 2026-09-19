@@ -15,9 +15,13 @@ class ConversationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $messagingState = $this->jobOrder->conversationMessagingState();
+
         return [
             'id' => $this->id,
             'job_order_id' => $this->job_order_id,
+            'messaging_state' => $messagingState,
+            'can_send_messages' => $messagingState === 'active',
             'unread_messages_count' =>
                 (int) ($this->unread_messages_count ?? 0),
             'created_at' => $this->created_at,

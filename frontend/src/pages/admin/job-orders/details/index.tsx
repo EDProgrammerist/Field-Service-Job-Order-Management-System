@@ -1,23 +1,21 @@
 import { useParams } from "react-router";
 
 import { DashboardShell } from "@/components/common/dashboard-shell/dashboard-layout";
-import { JobOrderDetails } from "@/components/features/job-orders/job-order-details";
+import { AdminJobOrderDetails } from "@/components/features/admin/admin-job-order-details";
 
 export default function AdminJobOrderDetailsPage() {
   const { jobOrderId } = useParams();
-  const parsedJobOrderId = Number(jobOrderId);
-
-  if (!Number.isInteger(parsedJobOrderId) || parsedJobOrderId < 1) {
-    return null;
-  }
+  const id = Number(jobOrderId);
 
   return (
     <DashboardShell>
-      <JobOrderDetails
-        jobOrderId={parsedJobOrderId}
-        listPath="/admin/job-orders"
-        editPath={`/admin/job-orders/${parsedJobOrderId}/edit`}
-      />
+      {Number.isInteger(id) && id > 0 ? (
+        <AdminJobOrderDetails jobOrderId={id} />
+      ) : (
+        <p className="text-sm text-destructive">
+          Invalid job order identifier.
+        </p>
+      )}
     </DashboardShell>
   );
 }
