@@ -57,14 +57,6 @@ class Technician extends Model
     }
 
     /**
-     * Get the job-order assignments for this technician.
-     */
-    public function jobOrderAssignments(): HasMany
-    {
-        return $this->hasMany(JobOrderAssignment::class);
-    }
-
-    /**
      * Limit the query to active technician profiles.
      */
     public function scopeActive(Builder $query): Builder

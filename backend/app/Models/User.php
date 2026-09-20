@@ -63,14 +63,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Get job-order assignments made by this user.
-     */
-    public function assignedJobOrderAssignments(): HasMany
-    {
-        return $this->hasMany(JobOrderAssignment::class, 'assigned_by');
-    }
-
-    /**
      * Get job orders scheduled by this user.
      */
     public function scheduledJobOrders(): HasMany

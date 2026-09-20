@@ -151,7 +151,6 @@ class CustomerServiceRequestController extends Controller
             'creator:id,name,email,role',
             'selectedTechnician.user:id,name',
             'scheduledBy:id,name,email,role',
-            'activeAssignment.technician.user:id,name,email,role',
         ];
     }
 }

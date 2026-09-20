@@ -145,14 +145,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
                 [TechnicianWorkflowController::class, 'index']
             );
 
-            /*
-             * Temporary read alias for the existing React frontend.
-             */
-            Route::get(
-                '/my-job-orders',
-                [TechnicianWorkflowController::class, 'index']
-            );
-
             Route::get(
                 '/technician/schedule',
                 [TechnicianWorkflowController::class, 'schedule']

@@ -67,14 +67,6 @@ class CustomerServiceRequestResource extends JsonResource
                     : null
             ),
 
-            /*
-             * Retained temporarily so the existing React contract does not
-             * lose its current field before the frontend migration.
-             */
-            'active_assignment' => $this->whenLoaded(
-                'activeAssignment'
-            ),
-
             'status_histories' => $this->whenLoaded(
                 'statusHistories'
             ),

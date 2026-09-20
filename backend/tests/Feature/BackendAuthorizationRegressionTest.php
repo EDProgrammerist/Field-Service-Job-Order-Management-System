@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use App\Models\JobOrderAssignment;
 
 class BackendAuthorizationRegressionTest extends TestCase
 {
@@ -83,7 +84,7 @@ class BackendAuthorizationRegressionTest extends TestCase
             [
                 'status' => 'cancelled',
                 'remarks' =>
-                    'Cancelled after administrative review.',
+                'Cancelled after administrative review.',
             ]
         )
             ->assertOk()
@@ -99,6 +100,49 @@ class BackendAuthorizationRegressionTest extends TestCase
                 'data.status_history.previous_status',
                 'pending_schedule'
             );
+    }
+
+    public function test_cancelling_legacy_work_retains_and_ends_its_assignment(): void
+    {
+        $admin = $this->createUser('admin');
+        [$customerUser, $customer] = $this->createCustomer();
+        $technician = $this->createTechnician();
+
+        $jobOrder = $this->createJobOrder(
+            $customerUser,
+            $customer,
+            $technician,
+            'assigned'
+        );
+
+        $assignment = JobOrderAssignment::create([
+            'job_order_id' => $jobOrder->id,
+            'technician_id' => $technician->id,
+            'assigned_by' => $admin->id,
+            'assigned_at' => now()->subHour(),
+            'notes' => 'Historical assignment.',
+        ]);
+
+        Sanctum::actingAs($admin);
+
+        $this->patchJson(
+            "/api/job-orders/{$jobOrder->id}/status",
+            ['status' => 'cancelled']
+        )
+            ->assertOk()
+            ->assertJsonPath('data.job_order.status', 'cancelled');
+
+        $this->assertDatabaseHas('job_order_assignments', [
+            'id' => $assignment->id,
+            'job_order_id' => $jobOrder->id,
+            'technician_id' => $technician->id,
+        ]);
+
+        $this->assertNotNull($assignment->fresh()->unassigned_at);
+        $this->assertSame(
+            $assignment->id,
+            $jobOrder->assignments()->firstOrFail()->id
+        );
     }
 
     public function test_admin_can_close_completed_request(): void
@@ -206,12 +250,12 @@ class BackendAuthorizationRegressionTest extends TestCase
             [
                 'customer_id' => $otherCustomer->id,
                 'selected_technician_id' =>
-                    $replacementTechnician->id,
+                $replacementTechnician->id,
                 'status' => 'accepted',
                 'scheduled_at' =>
-                    now()->addDay()->toIso8601String(),
+                now()->addDay()->toIso8601String(),
                 'scheduled_end_at' =>
-                    now()->addDay()->addHour()->toIso8601String(),
+                now()->addDay()->addHour()->toIso8601String(),
             ]
         )
             ->assertUnprocessable()
@@ -275,6 +319,26 @@ class BackendAuthorizationRegressionTest extends TestCase
                 'technician_id' => $technician->id,
             ]
         )->assertNotFound();
+    }
+
+    public function test_legacy_technician_list_alias_is_retired(): void
+    {
+        [$customerUser, $customer] = $this->createCustomer();
+        $technician = $this->createTechnician();
+        $jobOrder = $this->createJobOrder(
+            $customerUser,
+            $customer,
+            $technician
+        );
+
+        Sanctum::actingAs($technician->user);
+
+        $this->getJson('/api/my-job-orders')
+            ->assertNotFound();
+
+        $this->getJson('/api/technician/job-orders')
+            ->assertOk()
+            ->assertJsonPath('data.data.0.id', $jobOrder->id);
     }
 
     public function test_dispatcher_cannot_use_admin_write_routes(): void
@@ -380,7 +444,7 @@ class BackendAuthorizationRegressionTest extends TestCase
 
         return $user->technician()->create([
             'employee_number' =>
-                'TECH-'.Str::upper(Str::random(10)),
+            'TECH-' . Str::upper(Str::random(10)),
             'phone' => '09170000002',
             'specialization' => 'General repair',
             'is_active' => true,
@@ -395,7 +459,7 @@ class BackendAuthorizationRegressionTest extends TestCase
     ): JobOrder {
         return JobOrder::create([
             'job_order_number' =>
-                'JO-'.Str::upper(Str::random(14)),
+            'JO-' . Str::upper(Str::random(14)),
             'customer_id' => $customer->id,
             'selected_technician_id' => $technician->id,
             'created_by' => $customerUser->id,

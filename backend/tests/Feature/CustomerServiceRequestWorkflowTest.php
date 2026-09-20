@@ -127,6 +127,71 @@ class CustomerServiceRequestWorkflowTest extends TestCase
         );
     }
 
+    public function test_responses_omit_legacy_active_assignment(): void
+    {
+        $this->createAuthenticatedCustomer();
+        $technician = $this->createTechnician(true);
+
+        $created = $this->postJson('/api/customer/service-requests', [
+            ...$this->validPayload(),
+            'selected_technician_id' => $technician->id,
+        ])->assertCreated();
+
+        $jobOrderId = $created->json('data.id');
+
+        $this->assertArrayNotHasKey(
+            'active_assignment',
+            $created->json('data')
+        );
+
+        $customerList = $this->getJson(
+            '/api/customer/service-requests'
+        )->assertOk();
+
+        $this->assertArrayNotHasKey(
+            'active_assignment',
+            $customerList->json('data.data.0')
+        );
+
+        $customerDetails = $this->getJson(
+            "/api/customer/service-requests/{$jobOrderId}"
+        )->assertOk();
+
+        $this->assertArrayNotHasKey(
+            'active_assignment',
+            $customerDetails->json('data')
+        );
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        Sanctum::actingAs($admin);
+
+        $adminList = $this->getJson('/api/job-orders')->assertOk();
+
+        $this->assertArrayNotHasKey(
+            'active_assignment',
+            $adminList->json('data.data.0')
+        );
+
+        $adminDetails = $this->getJson(
+            "/api/job-orders/{$jobOrderId}"
+        )->assertOk();
+
+        $this->assertArrayNotHasKey(
+            'active_assignment',
+            $adminDetails->json('data')
+        );
+
+        $cancelled = $this->patchJson(
+            "/api/job-orders/{$jobOrderId}/status",
+            ['status' => 'cancelled']
+        )->assertOk();
+
+        $this->assertArrayNotHasKey(
+            'active_assignment',
+            $cancelled->json('data.job_order')
+        );
+    }
+
     public function test_customer_can_filter_own_requests_by_new_status(): void
     {
         $this->createAuthenticatedCustomer();
@@ -201,18 +266,18 @@ class CustomerServiceRequestWorkflowTest extends TestCase
 
         return $user->technician()->create([
             'employee_number' =>
-                'TECH-'.str_pad(
-                    (string) $user->id,
-                    5,
-                    '0',
-                    STR_PAD_LEFT
-                ),
+            'TECH-' . str_pad(
+                (string) $user->id,
+                5,
+                '0',
+                STR_PAD_LEFT
+            ),
             'phone' => '09170000002',
             'introduction' => 'Experienced repair technician.',
             'specialization' => 'General repair',
             'qualifications' => 'Certified technician.',
             'availability_notes' =>
-                'Available during regular service hours.',
+            'Available during regular service hours.',
             'is_active' => $isActive,
         ]);
     }

@@ -133,7 +133,6 @@ class JobOrderController extends Controller
             'jobOrder.creator:id,name,email,role',
             'jobOrder.selectedTechnician.user:id,name,email,role',
             'jobOrder.scheduledBy:id,name,email,role',
-            'jobOrder.activeAssignment.technician.user:id,name,email,role',
         ]);
 
         return response()->json([
@@ -156,7 +155,6 @@ class JobOrderController extends Controller
             'creator:id,name,email,role',
             'selectedTechnician.user:id,name,email,role',
             'scheduledBy:id,name,email,role',
-            'activeAssignment.technician.user:id,name,email,role',
         ];
     }
 }

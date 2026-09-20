@@ -37,33 +37,6 @@ export interface JobOrderCreator {
   role: UserRole;
 }
 
-export interface JobOrderTechnicianUser {
-  id: number;
-  name: string;
-  email: string;
-  role: "technician";
-}
-
-export interface JobOrderTechnician {
-  id: number;
-  employee_number: string;
-  phone: string | null;
-  specialization: string | null;
-  is_active: boolean;
-  user: JobOrderTechnicianUser;
-}
-
-export interface ActiveJobOrderAssignment {
-  id: number;
-  job_order_id: number;
-  technician_id: number;
-  assigned_by: number;
-  assigned_at: string;
-  unassigned_at: string | null;
-  notes: string | null;
-  technician: JobOrderTechnician;
-}
-
 export interface JobOrderStatusHistory {
   id: number;
   job_order_id: number;
@@ -99,24 +72,7 @@ export interface JobOrder {
   customer: JobOrderCustomer;
   creator: JobOrderCreator;
   selected_technician: CustomerTechnicianProfile | null;
-
-  /**
-   * Temporary backend compatibility field.
-   * New UI must use selected_technician instead.
-   */
-  active_assignment: ActiveJobOrderAssignment | null;
 }
-
-export interface CreateJobOrderPayload {
-  customer_id: number;
-  title: string;
-  description: string | null;
-  service_address: string | null;
-  priority: JobOrderPriority;
-  scheduled_at: string | null;
-}
-
-export type UpdateJobOrderPayload = CreateJobOrderPayload;
 
 export interface CustomerServiceRequestPayload {
   selected_technician_id: number;
@@ -133,10 +89,6 @@ export interface UpdateJobOrderStatusPayload {
 export interface JobOrderResponse {
   message: string;
   data: JobOrder;
-}
-
-export interface DeleteJobOrderResponse {
-  message: string;
 }
 
 export interface UpdateJobOrderStatusResponse {

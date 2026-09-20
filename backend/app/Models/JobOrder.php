@@ -146,16 +146,6 @@ class JobOrder extends Model
         return $this->hasMany(JobOrderAssignment::class);
     }
 
-    /**
-     * Legacy active assignment retained for frontend compatibility.
-     */
-    public function activeAssignment(): HasOne
-    {
-        return $this->hasOne(JobOrderAssignment::class)
-            ->whereNull('unassigned_at')
-            ->latestOfMany();
-    }
-
     public function scheduleRevisions(): HasMany
     {
         return $this->hasMany(JobOrderScheduleRevision::class);
