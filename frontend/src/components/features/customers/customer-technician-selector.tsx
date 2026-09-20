@@ -204,7 +204,7 @@ export function CustomerTechnicianSelector({
       {isLoading ? (
         <div
           aria-label="Loading technician profiles"
-          className="grid gap-3 md:grid-cols-2"
+          className="grid gap-3 lg:grid-cols-2"
           role="status"
         >
           {Array.from({ length: PAGE_SIZE }, (_, index) => (
@@ -242,7 +242,7 @@ export function CustomerTechnicianSelector({
           }
           aria-invalid={Boolean(errorMessage)}
           aria-label="Preferred technician"
-          className="grid gap-3 md:grid-cols-2"
+          className="grid gap-3 lg:grid-cols-2"
           role="radiogroup"
         >
           {technicians.map((technician) => {

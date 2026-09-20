@@ -1,8 +1,6 @@
-import { Wrench } from "lucide-react";
 import { Link } from "react-router";
 
 const footerLinks = [
-  { label: "Home", href: "#home" },
   { label: "About", href: "#about" },
   { label: "Services", href: "#services" },
   { label: "How It Works", href: "#how-it-works" },
@@ -11,30 +9,30 @@ const footerLinks = [
 
 export function PublicFooter() {
   return (
-    <footer className="border-t border-[#dfe8e2] bg-white px-4 py-9 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-[1180px] gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.9fr_0.7fr]">
+    <footer className="relative z-[2] border-t border-indigo-100 bg-white/95 px-6 py-12 sm:px-8 md:px-12 lg:px-16">
+      <div className="mx-auto grid w-full max-w-[88rem] gap-10 md:grid-cols-[1.5fr_1fr_1fr]">
         <div>
-          <a
-            className="inline-flex min-h-11 items-center gap-2.5 rounded-md text-[#14221d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d7652] focus-visible:ring-offset-4"
-            href="#home"
+          <Link
+            className="inline-flex items-center text-lg font-medium uppercase tracking-tight text-[#111827] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#4f46e5]"
+            to="/"
           >
-            <span className="flex size-8 items-center justify-center rounded-md bg-[#0d7652] text-white">
-              <Wrench aria-hidden="true" className="size-[18px]" strokeWidth={2.3} />
+            Field Service
+            <span className="ml-0.5 text-xl leading-none text-[#4f46e5]">
+              °
             </span>
-            <span className="font-black tracking-[-0.02em]">Field Service</span>
-          </a>
-          <p className="mt-2 max-w-sm text-sm leading-6 text-[#607068]">
-            Job order management for customer requests, assignments, and
-            recorded service updates.
+          </Link>
+          <p className="mt-4 max-w-sm text-sm leading-6 text-[#4b5563]">
+            One connected place for customer requests, technician choice,
+            scheduling, and recorded repair progress.
           </p>
         </div>
 
         <nav aria-label="Footer navigation">
-          <p className="text-sm font-black text-[#21352c]">Quick Links</p>
-          <div className="mt-2 grid grid-cols-2 gap-x-6">
+          <h2 className="text-sm font-medium text-[#111827]">Explore</h2>
+          <div className="mt-3 flex flex-col items-start">
             {footerLinks.map((item) => (
               <a
-                className="inline-flex min-h-11 items-center text-xs font-semibold text-[#52635b] hover:text-[#0d7652] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d7652]"
+                className="inline-flex min-h-10 items-center text-sm text-[#4b5563] hover:text-[#4338ca] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4f46e5]"
                 href={item.href}
                 key={item.href}
               >
@@ -45,28 +43,28 @@ export function PublicFooter() {
         </nav>
 
         <div>
-          <p className="text-sm font-black text-[#21352c]">Account</p>
-          <div className="mt-2 flex flex-col">
+          <h2 className="text-sm font-medium text-[#111827]">Account</h2>
+          <div className="mt-3 flex flex-col items-start">
             <Link
-              className="inline-flex min-h-11 items-center text-xs font-semibold text-[#52635b] hover:text-[#0d7652] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d7652]"
+              className="inline-flex min-h-10 items-center text-sm text-[#4b5563] hover:text-[#4338ca] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4f46e5]"
               to="/login"
             >
-              Sign In
+              Sign in
             </Link>
             <Link
-              className="inline-flex min-h-11 items-center text-xs font-semibold text-[#52635b] hover:text-[#0d7652] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d7652]"
+              className="inline-flex min-h-10 items-center text-sm text-[#4b5563] hover:text-[#4338ca] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4f46e5]"
               to="/customer/register"
             >
               Create Customer Account
             </Link>
           </div>
         </div>
-
-        <p className="border-t border-[#dfe8e2] pt-5 text-xs text-[#687870] sm:col-span-2 lg:col-span-3">
-          © {new Date().getFullYear()} Field Service Job Order Management System.
-          All rights reserved.
-        </p>
       </div>
+
+      <p className="mx-auto mt-12 w-full max-w-[88rem] border-t border-indigo-100 pt-6 text-xs text-[#4b5563]">
+        © {new Date().getFullYear()} Field Service Job Order Management System.
+        All rights reserved.
+      </p>
     </footer>
   );
 }

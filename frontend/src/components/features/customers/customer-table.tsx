@@ -113,14 +113,14 @@ export function CustomerTable({
             key={customer.id}
             className="rounded-lg border bg-card p-4 text-card-foreground"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h3 className="truncate font-semibold">{customer.name}</h3>
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {customer.contact_person ?? "No contact person"}
-                </p>
-              </div>
+            <div className="min-w-0">
+              <h3 className="break-words font-semibold">{customer.name}</h3>
+              <p className="mt-1 break-words text-sm text-muted-foreground">
+                {customer.contact_person ?? "No contact person"}
+              </p>
+            </div>
 
+            <div className="mt-2">
               <CustomerActions
                 customer={customer}
                 onDelete={onDelete}
@@ -129,14 +129,14 @@ export function CustomerTable({
               />
             </div>
 
-            <div className="mt-4 grid gap-2 text-sm">
-              <p>
+            <div className="mt-3 grid gap-2 text-sm">
+              <p className="break-words">
                 <span className="text-muted-foreground">Phone: </span>
                 {customer.phone}
               </p>
-              <p className="truncate">
+              <p className="min-w-0">
                 <span className="text-muted-foreground">Email: </span>
-                {customer.email ?? "—"}
+                <span className="break-all">{customer.email ?? "—"}</span>
               </p>
             </div>
           </article>

@@ -62,23 +62,30 @@ export function TechnicianTable({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="truncate font-semibold">
+                <h3 className="break-words font-semibold">
                   {technician.user.name}
                 </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 break-all text-sm text-muted-foreground">
                   {technician.employee_number}
                 </p>
               </div>
 
-              <Badge variant={technician.is_active ? "default" : "secondary"}>
+              <Badge
+                className="shrink-0"
+                variant={technician.is_active ? "default" : "secondary"}
+              >
                 {technician.is_active ? "Active" : "Inactive"}
               </Badge>
             </div>
 
             <div className="mt-4 grid gap-2 text-sm">
-              <p className="truncate">{technician.user.email}</p>
-              <p>{technician.phone ?? "No phone number"}</p>
-              <p>{technician.specialization ?? "No specialization"}</p>
+              <p className="break-all">{technician.user.email}</p>
+              <p className="break-words">
+                {technician.phone ?? "No phone number"}
+              </p>
+              <p className="break-words">
+                {technician.specialization ?? "No specialization"}
+              </p>
             </div>
 
             <div className="mt-4 flex justify-end gap-2">

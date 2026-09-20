@@ -1,42 +1,63 @@
-import { workflowSteps } from "@/components/public/home/homepage-content";
+import {
+  CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
+  UserRoundCheck,
+} from "lucide-react";
+
+const workflow = [
+  {
+    title: "Request and choose",
+    description:
+      "Describe the equipment issue and select a technician from their profile.",
+    icon: ClipboardList,
+  },
+  {
+    title: "Dispatcher schedules",
+    description:
+      "The dispatcher sets the service time and checks the selected technician's availability.",
+    icon: CalendarDays,
+  },
+  {
+    title: "Technician responds",
+    description:
+      "The technician accepts or rejects the scheduled visit based on availability.",
+    icon: UserRoundCheck,
+  },
+  {
+    title: "Follow the job",
+    description:
+      "Track status changes and keep the completed work connected to the job order.",
+    icon: ClipboardCheck,
+  },
+];
 
 export function WorkflowSection() {
   return (
     <section
-      className="scroll-mt-16 bg-[#fbfdfb] px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="relative z-[2] scroll-mt-20 border-y border-indigo-100 bg-[#f7f8ff]/95 px-6 py-20 sm:px-8 md:px-12 md:py-28 lg:px-16"
       id="how-it-works"
     >
-      <div className="mx-auto max-w-[1180px]">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="inline-flex min-h-7 items-center rounded-full bg-[#e1f2e7] px-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#075d40]">
-            How it works
-          </p>
-          <h2 className="mt-4 text-[clamp(2rem,4vw,3.25rem)] font-black leading-[1.02] tracking-[-0.04em] text-[#14221d]">
-            Get from Request to Results
-          </h2>
-          <p className="mt-3 text-sm font-medium leading-6 text-[#607068] sm:text-base">
-            A straightforward process for smoother field operations.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-[88rem]">
+        <h2 className="max-w-2xl text-[clamp(2rem,3.5vw,3.25rem)] font-light leading-[1.12] tracking-[-0.04em] text-[#111827]">
+          A clear path from request to repair.
+        </h2>
+        <p className="mt-5 max-w-2xl text-base leading-7 text-[#4b5563]">
+          Each role has a defined part in the process, while the job order keeps
+          its progress together.
+        </p>
 
-        <ol className="relative mt-11 grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          <div
-            aria-hidden="true"
-            className="absolute left-[8%] right-[8%] top-6 hidden h-px bg-[#b9d5c3] lg:block"
-          />
-          {workflowSteps.map((step, index) => (
-            <li className="relative text-center" key={step.title}>
-              <span className="relative z-10 mx-auto flex size-12 items-center justify-center rounded-full border border-[#b2d5be] bg-[#e5f5ea] text-[#0d7652]">
-                <step.icon aria-hidden="true" className="size-5" strokeWidth={2.2} />
+        <ol className="mt-12 grid gap-x-8 gap-y-10 border-t border-indigo-200 pt-8 md:grid-cols-2 xl:grid-cols-4">
+          {workflow.map(({ title, description, icon: Icon }) => (
+            <li className="max-w-sm" key={title}>
+              <span className="flex size-12 items-center justify-center rounded-full border border-indigo-200 bg-white text-[#4f46e5]">
+                <Icon aria-hidden="true" className="size-5" strokeWidth={1.5} />
               </span>
-              <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#6b7a73]">
-                Step {index + 1}
-              </p>
-              <h3 className="mt-1 text-base font-black text-[#1b2d25]">
-                {step.title}
+              <h3 className="mt-6 text-lg font-medium tracking-tight text-[#111827]">
+                {title}
               </h3>
-              <p className="mx-auto mt-2 max-w-[230px] text-sm leading-6 text-[#5b6c64]">
-                {step.description}
+              <p className="mt-3 text-sm leading-6 text-[#4b5563]">
+                {description}
               </p>
             </li>
           ))}

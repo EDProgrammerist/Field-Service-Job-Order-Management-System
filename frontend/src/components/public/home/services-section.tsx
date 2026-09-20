@@ -1,50 +1,78 @@
-import { ArrowRight } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardList,
+  History,
+  UsersRound,
+} from "lucide-react";
 
-import { services } from "@/components/public/home/homepage-content";
+const services = [
+  {
+    title: "Service requests",
+    description:
+      "Record the equipment and the problem so the repair starts with clear details.",
+    icon: ClipboardList,
+    layout: "lg:col-span-4",
+    surface: "bg-gradient-to-br from-[#eeefff] via-white to-[#e8faff]",
+  },
+  {
+    title: "Technician profiles",
+    description:
+      "Review technician information and choose who receives the repair request.",
+    icon: UsersRound,
+    layout: "lg:col-span-2",
+    surface: "bg-white",
+  },
+  {
+    title: "Schedule coordination",
+    description:
+      "The dispatcher sets service dates and checks the selected technician's availability.",
+    icon: CalendarDays,
+    layout: "lg:col-span-2",
+    surface: "bg-[#edfbff]",
+  },
+  {
+    title: "Job order history",
+    description:
+      "Follow progress and keep completed work connected to its original request.",
+    icon: History,
+    layout: "lg:col-span-4",
+    surface: "bg-[#f3f3ff]",
+  },
+];
 
 export function ServicesSection() {
   return (
     <section
-      className="scroll-mt-16 bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8"
+      className="relative z-[2] scroll-mt-20 bg-white/95 px-6 py-20 sm:px-8 md:px-12 md:py-28 lg:px-16"
       id="services"
     >
-      <div className="mx-auto max-w-[1180px]">
-        <div className="mx-auto max-w-[900px] text-center">
-          <p className="inline-flex min-h-7 items-center rounded-full bg-[#e1f2e7] px-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#075d40]">
-            Our services
-          </p>
-          <h2 className="mt-4 text-[clamp(2rem,3.9vw,3rem)] font-black leading-[1.02] tracking-[-0.04em] text-[#14221d]">
-            Tools for Every Step
-            <span className="block">of Your Field Service Operations</span>
-          </h2>
-          <p className="mt-3 text-sm font-medium leading-6 text-[#607068] sm:text-base">
-            Keep service requests, assignments, progress, and completed records
-            connected.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-[88rem]">
+        <h2 className="max-w-2xl text-[clamp(2rem,3.5vw,3.25rem)] font-light leading-[1.12] tracking-[-0.04em] text-[#111827]">
+          Built around the repair journey.
+        </h2>
+        <p className="mt-5 max-w-2xl text-base leading-7 text-[#4b5563]">
+          Requests, technician choice, scheduling, and progress stay connected
+          without changing who is responsible for each step.
+        </p>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map((service) => (
+        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+          {services.map(({ title, description, icon: Icon, layout, surface }) => (
             <article
-              className="group flex min-h-[238px] flex-col rounded-lg border border-[#dce8e0] bg-[#f7fbf8] p-5 transition-colors hover:border-[#9fc5ad] hover:bg-[#f1f8f3]"
-              key={service.title}
+              className={`flex min-h-56 flex-col rounded-2xl border border-indigo-100 p-6 sm:p-8 lg:min-h-64 ${layout} ${surface}`}
+              key={title}
             >
-              <span className="flex size-11 items-center justify-center rounded-md bg-[#dff1e5] text-[#0d7652] transition-colors group-hover:bg-[#d2eadb]">
-                <service.icon aria-hidden="true" className="size-5" strokeWidth={2.2} />
+              <span className="flex size-12 items-center justify-center rounded-full border border-indigo-200 bg-white/80 text-[#4f46e5]">
+                <Icon aria-hidden="true" className="size-5" strokeWidth={1.5} />
               </span>
-              <h3 className="mt-5 text-base font-black leading-5 tracking-[-0.02em] text-[#1b2d25]">
-                {service.title}
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-[#5b6c64]">
-                {service.description}
-              </p>
-              <a
-                className="mt-auto inline-flex min-h-11 items-center gap-1.5 pt-4 text-xs font-extrabold text-[#0d6849] hover:text-[#074e38] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d7652] focus-visible:ring-offset-2"
-                href="#how-it-works"
-              >
-                See the job flow
-                <ArrowRight aria-hidden="true" className="size-3.5" />
-              </a>
+
+              <div className="mt-auto pt-10">
+                <h3 className="text-xl font-medium tracking-tight text-[#111827]">
+                  {title}
+                </h3>
+                <p className="mt-3 max-w-md text-sm leading-6 text-[#4b5563]">
+                  {description}
+                </p>
+              </div>
             </article>
           ))}
         </div>

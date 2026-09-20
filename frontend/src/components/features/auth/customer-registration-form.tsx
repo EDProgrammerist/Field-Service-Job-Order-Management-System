@@ -19,7 +19,7 @@ type RegistrationField =
 type FieldErrors = Partial<Record<RegistrationField, string>>;
 
 const inputClassName =
-  "h-12 rounded-md border-[#afc2b7] bg-white px-4 text-base focus-visible:border-[#0d7652] focus-visible:ring-[#0d7652]/25";
+  "h-12 rounded-lg border-[#b7bbd8] bg-white px-4 text-base text-[#111827] placeholder:text-[#6b7280] focus-visible:border-[#4f46e5] focus-visible:ring-[#4f46e5]/25 dark:bg-white dark:text-[#111827]";
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) {
@@ -117,24 +117,41 @@ export function CustomerRegistrationForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
-      <p className="text-sm font-extrabold text-[#0d7652]">New customer</p>
+    <div className="w-full max-w-[680px]">
+      <p
+        className="auralis-enter mb-8 inline-flex rounded-full border border-indigo-200/80 bg-indigo-50/70 px-3.5 py-1.5 text-xs font-medium text-[#4f46e5]"
+        style={{ animationDelay: "220ms" }}
+      >
+        New customer
+      </p>
 
-      <div className="mt-3 grid gap-4 border-b border-[#dfe8e2] pb-5 md:grid-cols-[1fr_0.72fr] md:items-end">
-        <h1 className="max-w-xl text-[clamp(2.5rem,5vw,4.25rem)] font-black leading-[0.98] tracking-[-0.045em] text-[#14221d]">
-          Create your
-          <span className="block text-[#0d7652]">customer account.</span>
-        </h1>
-        <p className="max-w-sm text-sm font-medium leading-6 text-[#52635b] sm:text-base">
-          Add your contact details to open the customer dashboard and submit
-          service requests.
-        </p>
-      </div>
+      <h1
+        className="auralis-enter text-[clamp(2.5rem,5vw,3.9rem)] font-light leading-[1.08] tracking-[-0.045em] text-[#111827]"
+        style={{ animationDelay: "340ms" }}
+      >
+        Create your
+        <span className="block bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] bg-clip-text text-transparent">
+          customer account.
+        </span>
+      </h1>
 
-      <form className="mt-5 space-y-5" onSubmit={handleSubmit} noValidate>
+      <p
+        className="auralis-enter mt-6 max-w-md text-base leading-7 text-[#4b5563]"
+        style={{ animationDelay: "460ms" }}
+      >
+        Add your contact details to open the customer dashboard and submit
+        service requests.
+      </p>
+
+      <form
+        className="auralis-enter mt-8 space-y-5"
+        noValidate
+        onSubmit={handleSubmit}
+        style={{ animationDelay: "580ms" }}
+      >
         {formError ? (
           <div
-            className="border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
+            className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
             role="alert"
           >
             {formError}
@@ -143,7 +160,7 @@ export function CustomerRegistrationForm() {
 
         <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label className="font-bold text-[#21352c]" htmlFor="name">
+            <Label className="font-medium text-[#111827]" htmlFor="name">
               Full name
             </Label>
             <Input
@@ -163,7 +180,7 @@ export function CustomerRegistrationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label className="font-bold text-[#21352c]" htmlFor="email">
+            <Label className="font-medium text-[#111827]" htmlFor="email">
               Email address
             </Label>
             <Input
@@ -189,7 +206,7 @@ export function CustomerRegistrationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label className="font-bold text-[#21352c]" htmlFor="phone">
+            <Label className="font-medium text-[#111827]" htmlFor="phone">
               Phone number
             </Label>
             <Input
@@ -210,15 +227,17 @@ export function CustomerRegistrationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label className="font-bold text-[#21352c]" htmlFor="address">
+            <Label className="font-medium text-[#111827]" htmlFor="address">
               Address
-              <span className="font-normal text-[#52635b]">(optional)</span>
+              <span className="font-normal text-[#4b5563]">(optional)</span>
             </Label>
             <Textarea
-              aria-describedby={fieldErrors.address ? "address-error" : undefined}
+              aria-describedby={
+                fieldErrors.address ? "address-error" : undefined
+              }
               aria-invalid={Boolean(fieldErrors.address)}
               autoComplete="street-address"
-              className="min-h-12 resize-y rounded-md border-[#afc2b7] bg-white px-4 py-3 text-base focus-visible:border-[#0d7652] focus-visible:ring-[#0d7652]/25"
+              className="min-h-12 resize-y rounded-lg border-[#b7bbd8] bg-white px-4 py-3 text-base text-[#111827] focus-visible:border-[#4f46e5] focus-visible:ring-[#4f46e5]/25 dark:bg-white dark:text-[#111827]"
               disabled={isSubmitting}
               id="address"
               onChange={(event) => {
@@ -232,7 +251,7 @@ export function CustomerRegistrationForm() {
           </div>
 
           <div className="space-y-2">
-            <Label className="font-bold text-[#21352c]" htmlFor="password">
+            <Label className="font-medium text-[#111827]" htmlFor="password">
               Password
             </Label>
             <Input
@@ -259,7 +278,7 @@ export function CustomerRegistrationForm() {
 
           <div className="space-y-2">
             <Label
-              className="font-bold text-[#21352c]"
+              className="font-medium text-[#111827]"
               htmlFor="password-confirmation"
             >
               Confirm password
@@ -289,11 +308,11 @@ export function CustomerRegistrationForm() {
           </div>
         </div>
 
-        <div className="grid gap-4 border-t border-[#dfe8e2] pt-5 sm:grid-cols-[1fr_auto] sm:items-center">
-          <p className="text-sm font-medium text-[#52635b]">
+        <div className="grid gap-4 border-t border-[#e5e7eb] pt-5 sm:grid-cols-[1fr_auto] sm:items-center">
+          <p className="text-sm text-[#4b5563]">
             Already registered?{" "}
             <Link
-              className="inline-flex min-h-11 items-center rounded-sm font-extrabold text-[#0d7652] underline decoration-2 underline-offset-4 hover:text-[#075d40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d7652] focus-visible:ring-offset-4"
+              className="inline-flex min-h-11 items-center rounded-sm font-semibold text-[#4338ca] underline decoration-2 underline-offset-4 hover:text-[#3730a3] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#4f46e5]"
               to="/login"
             >
               Sign in instead
@@ -301,7 +320,7 @@ export function CustomerRegistrationForm() {
           </p>
 
           <Button
-            className="h-12 w-full rounded-md bg-[#0d7652] px-7 text-base font-black text-white hover:bg-[#095f42] focus-visible:border-[#0d7652] focus-visible:ring-[#0d7652]/30 sm:w-auto"
+            className="h-12 w-full rounded-full bg-[#1c1c1e] px-7 text-base font-medium text-white hover:bg-[#29292c] focus-visible:border-[#4f46e5] focus-visible:ring-[#4f46e5]/30 sm:w-auto"
             disabled={isSubmitting}
             type="submit"
           >

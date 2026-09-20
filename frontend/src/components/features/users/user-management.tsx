@@ -407,19 +407,18 @@ export function UserManagement() {
                   : users.map((user) => (
                     <article key={user.id} className="rounded-lg border p-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold">
-                            {user.name}
-                          </p>
-                          <p className="mt-1 truncate text-sm text-muted-foreground">
-                            {user.email}
-                          </p>
-                        </div>
+                        <p className="min-w-0 break-words font-semibold">
+                          {user.name}
+                        </p>
 
-                        <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium">
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium">
                           {roleLabel(user.role)}
                         </span>
                       </div>
+
+                      <p className="mt-2 break-all text-sm text-muted-foreground">
+                        {user.email}
+                      </p>
 
                       <Button
                         className="mt-4"

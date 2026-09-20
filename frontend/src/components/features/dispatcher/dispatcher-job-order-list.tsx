@@ -43,6 +43,13 @@ import type { PaginatedCollection } from "@/types/pagination";
 
 const PAGE_SIZE = 10;
 
+const QUEUE_FILTER_LABELS: Record<QueueFilter, string> = {
+  needs_scheduling: "Needs scheduling",
+  pending_schedule: "Pending schedule",
+  technician_rejected: "Rejected schedules",
+  pending_technician_response: "Awaiting technician",
+};
+
 type QueueFilter = "needs_scheduling" | DispatcherQueueStatus;
 
 function formatDate(value: string | null) {
@@ -114,8 +121,8 @@ export function DispatcherJobOrderList() {
 
   return (
     <Card className="gap-0 rounded-none py-0 shadow-none">
-      <CardHeader className="flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <CardHeader className="flex flex-col gap-4 border-b p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
           <CardTitle className="text-base">Scheduling queue</CardTitle>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Review the customer&apos;s chosen technician and assign
@@ -123,7 +130,7 @@ export function DispatcherJobOrderList() {
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:shrink-0">
           <Button
             type="button"
             variant="outline"
@@ -146,7 +153,7 @@ export function DispatcherJobOrderList() {
               aria-label="Filter scheduling queue"
               className="w-full sm:w-64"
             >
-              <SelectValue placeholder="Filter queue" />
+              <SelectValue>{QUEUE_FILTER_LABELS[filter]}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="needs_scheduling">
@@ -165,7 +172,6 @@ export function DispatcherJobOrderList() {
           </Select>
         </div>
       </CardHeader>
-
       <CardContent className="p-0">
         {loadError ? (
           <div className="flex min-h-64 flex-col items-center justify-center gap-4 px-6 text-center">
@@ -224,63 +230,63 @@ export function DispatcherJobOrderList() {
 
         {!loadError && !isLoading
           ? jobOrders.map((jobOrder) => (
-              <article
-                className="grid gap-5 border-b p-5 transition-colors hover:bg-muted/30 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center"
-                key={jobOrder.id}
+            <article
+              className="grid gap-5 border-b p-5 transition-colors hover:bg-muted/30 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center"
+              key={jobOrder.id}
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium tracking-wide text-muted-foreground">
+                    {jobOrder.job_order_number}
+                  </span>
+                  <JobOrderStatusBadge
+                    status={jobOrder.status}
+                  />
+                  <JobOrderPriorityBadge
+                    priority={jobOrder.priority}
+                  />
+                </div>
+
+                <h3 className="mt-3 truncate font-semibold">
+                  {jobOrder.title}
+                </h3>
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  Customer: {jobOrder.customer.name}
+                </p>
+              </div>
+
+              <div className="min-w-0 space-y-2 text-sm">
+                <p className="truncate">
+                  <span className="text-muted-foreground">
+                    Chosen technician:{" "}
+                  </span>
+                  {jobOrder.selected_technician?.name ??
+                    "Technician unavailable"}
+                </p>
+                <p className="flex items-center gap-2 text-muted-foreground">
+                  <CalendarClock
+                    aria-hidden={true}
+                    className="size-4 shrink-0"
+                  />
+                  {formatDate(jobOrder.scheduled_at)}
+                </p>
+              </div>
+
+              <Button
+                render={
+                  <Link
+                    to={`/dispatcher/job-orders/${jobOrder.id}`}
+                  />
+                }
+                size="sm"
+                variant="outline"
+                className="w-full sm:w-fit"
               >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-medium tracking-wide text-muted-foreground">
-                      {jobOrder.job_order_number}
-                    </span>
-                    <JobOrderStatusBadge
-                      status={jobOrder.status}
-                    />
-                    <JobOrderPriorityBadge
-                      priority={jobOrder.priority}
-                    />
-                  </div>
-
-                  <h3 className="mt-3 truncate font-semibold">
-                    {jobOrder.title}
-                  </h3>
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
-                    Customer: {jobOrder.customer.name}
-                  </p>
-                </div>
-
-                <div className="min-w-0 space-y-2 text-sm">
-                  <p className="truncate">
-                    <span className="text-muted-foreground">
-                      Chosen technician:{" "}
-                    </span>
-                    {jobOrder.selected_technician?.name ??
-                      "Technician unavailable"}
-                  </p>
-                  <p className="flex items-center gap-2 text-muted-foreground">
-                    <CalendarClock
-                      aria-hidden={true}
-                      className="size-4 shrink-0"
-                    />
-                    {formatDate(jobOrder.scheduled_at)}
-                  </p>
-                </div>
-
-                <Button
-                  render={
-                    <Link
-                      to={`/dispatcher/job-orders/${jobOrder.id}`}
-                    />
-                  }
-                  size="sm"
-                  variant="outline"
-                  className="w-full sm:w-fit"
-                >
-                  <Eye aria-hidden={true} />
-                  Review
-                </Button>
-              </article>
-            ))
+                <Eye aria-hidden={true} />
+                Review
+              </Button>
+            </article>
+          ))
           : null}
       </CardContent>
 

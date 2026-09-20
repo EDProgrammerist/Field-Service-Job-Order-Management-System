@@ -37,6 +37,12 @@ import type { Technician } from "@/types/technician";
 
 const PAGE_SIZE = 9;
 
+const ACTIVE_FILTER_LABELS: Record<ActiveFilter, string> = {
+  all: "All technicians",
+  active: "Active only",
+  inactive: "Inactive only",
+};
+
 type ActiveFilter = "all" | "active" | "inactive";
 
 function getInitials(name: string) {
@@ -97,8 +103,8 @@ export function DispatcherTechnicianDirectory() {
   return (
     <section className="space-y-4">
       <Card className="gap-0 rounded-none py-0 shadow-none">
-        <CardHeader className="flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <CardHeader className="flex flex-col gap-4 border-b p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
             <CardTitle className="text-base">
               Technician directory
             </CardTitle>
@@ -108,15 +114,13 @@ export function DispatcherTechnicianDirectory() {
             </p>
           </div>
 
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:shrink-0">
             <Button
               type="button"
               size="sm"
               variant="outline"
               disabled={isLoading}
-              onClick={() =>
-                void loadTechnicians(page, filter)
-              }
+              onClick={() => void loadTechnicians(page, filter)}
             >
               <RefreshCw aria-hidden={true} />
               Refresh
@@ -137,7 +141,7 @@ export function DispatcherTechnicianDirectory() {
                 aria-label="Filter technicians"
                 className="w-full sm:w-44"
               >
-                <SelectValue />
+                <SelectValue>{ACTIVE_FILTER_LABELS[filter]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
@@ -178,7 +182,7 @@ export function DispatcherTechnicianDirectory() {
 
           {!loadError && isLoading ? (
             <div
-              className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+              className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3"
               aria-label="Loading technicians"
             >
               {Array.from({ length: 6 }, (_, index) => (
@@ -191,8 +195,8 @@ export function DispatcherTechnicianDirectory() {
           ) : null}
 
           {!loadError &&
-          !isLoading &&
-          technicians.length === 0 ? (
+            !isLoading &&
+            technicians.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center text-center">
               <div className="flex size-12 items-center justify-center border bg-muted/30">
                 <UsersRound
@@ -210,7 +214,7 @@ export function DispatcherTechnicianDirectory() {
           ) : null}
 
           {!loadError && !isLoading && technicians.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
               {technicians.map((technician) => (
                 <article
                   className="flex flex-col border bg-background p-5 transition-colors hover:bg-muted/20"
@@ -325,7 +329,7 @@ export function DispatcherTechnicianDirectory() {
                       }
                       className={
                         pagination.current_page ===
-                        pagination.last_page
+                          pagination.last_page
                           ? "pointer-events-none opacity-50"
                           : undefined
                       }

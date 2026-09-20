@@ -206,7 +206,7 @@ export function TechnicianDashboard() {
         aria-label="Loading technician dashboard"
       >
         <Skeleton className="h-36 w-full rounded-none" />
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3">
           {Array.from({ length: 3 }, (_, index) => (
             <Skeleton
               className="h-44 w-full rounded-none"
@@ -280,7 +280,7 @@ export function TechnicianDashboard() {
       </section>
 
       <section
-        className="grid gap-4 md:grid-cols-3"
+        className="grid gap-4 lg:grid-cols-3"
         aria-label="Technician job overview"
       >
         <MetricCard

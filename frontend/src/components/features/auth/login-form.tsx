@@ -22,7 +22,12 @@ const dashboardPathByRole: Record<UserRole, string> = {
   customer: "/customer/dashboard",
 };
 
-function isStringArrayRecord(value: unknown): value is Record<string, string[]> {
+const inputClassName =
+  "h-12 rounded-lg border-[#b7bbd8] bg-white px-4 text-base text-[#111827] placeholder:text-[#6b7280] focus-visible:border-[#4f46e5] focus-visible:ring-[#4f46e5]/25 dark:bg-white dark:text-[#111827]";
+
+function isStringArrayRecord(
+  value: unknown,
+): value is Record<string, string[]> {
   if (typeof value !== "object" || value === null) {
     return false;
   }
@@ -126,22 +131,40 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-[520px]">
-      <p className="text-sm font-extrabold text-[#0d7652]">Account access</p>
-
-      <h1 className="mt-4 max-w-lg text-[clamp(2.7rem,6vw,4.5rem)] font-black leading-[0.98] tracking-[-0.045em] text-[#14221d]">
-        Sign in to your
-        <span className="block text-[#0d7652]">workspace.</span>
-      </h1>
-
-      <p className="mt-5 max-w-md text-base font-medium leading-7 text-[#52635b] sm:text-lg">
-        Use your existing account. We will open the dashboard connected to your
-        role.
+      <p
+        className="auralis-enter mb-8 inline-flex rounded-full border border-indigo-200/80 bg-indigo-50/70 px-3.5 py-1.5 text-xs font-medium text-[#4f46e5]"
+        style={{ animationDelay: "220ms" }}
+      >
+        Account access
       </p>
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
+      <h1
+        className="auralis-enter text-[clamp(2.75rem,5vw,3.75rem)] font-light leading-[1.08] tracking-[-0.045em] text-[#111827]"
+        style={{ animationDelay: "340ms" }}
+      >
+        Sign in to your
+        <span className="block bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] bg-clip-text text-transparent">
+          workspace.
+        </span>
+      </h1>
+
+      <p
+        className="auralis-enter mt-6 max-w-md text-base leading-7 text-[#4b5563]"
+        style={{ animationDelay: "460ms" }}
+      >
+        Use your existing account. We will open the dashboard connected to
+        your role.
+      </p>
+
+      <form
+        className="auralis-enter mt-8 space-y-5"
+        noValidate
+        onSubmit={handleSubmit}
+        style={{ animationDelay: "580ms" }}
+      >
         {formError ? (
           <div
-            className="border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
+            className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
             role="alert"
           >
             {formError}
@@ -149,14 +172,14 @@ export function LoginForm() {
         ) : null}
 
         <div className="space-y-2">
-          <Label className="font-bold text-[#21352c]" htmlFor="email">
+          <Label className="font-medium text-[#111827]" htmlFor="email">
             Email address
           </Label>
           <Input
             aria-describedby={fieldErrors.email ? "email-error" : undefined}
             aria-invalid={Boolean(fieldErrors.email)}
             autoComplete="email"
-            className="h-12 rounded-md border-[#afc2b7] bg-white px-4 text-base focus-visible:border-[#0d7652] focus-visible:ring-[#0d7652]/25"
+            className={inputClassName}
             disabled={isSubmitting || isLoading}
             id="email"
             onChange={(event) => {
@@ -175,7 +198,7 @@ export function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <Label className="font-bold text-[#21352c]" htmlFor="password">
+          <Label className="font-medium text-[#111827]" htmlFor="password">
             Password
           </Label>
           <Input
@@ -184,7 +207,7 @@ export function LoginForm() {
             }
             aria-invalid={Boolean(fieldErrors.password)}
             autoComplete="current-password"
-            className="h-12 rounded-md border-[#afc2b7] bg-white px-4 text-base focus-visible:border-[#0d7652] focus-visible:ring-[#0d7652]/25"
+            className={inputClassName}
             disabled={isSubmitting || isLoading}
             id="password"
             onChange={(event) => {
@@ -195,17 +218,14 @@ export function LoginForm() {
             value={password}
           />
           {fieldErrors.password ? (
-            <p
-              className="text-sm font-semibold text-red-700"
-              id="password-error"
-            >
+            <p className="text-sm font-semibold text-red-700" id="password-error">
               {fieldErrors.password}
             </p>
           ) : null}
         </div>
 
         <Button
-          className="h-12 w-full rounded-md bg-[#0d7652] text-base font-black text-white hover:bg-[#095f42] focus-visible:border-[#0d7652] focus-visible:ring-[#0d7652]/30"
+          className="h-12 w-full rounded-full bg-[#1c1c1e] text-base font-medium text-white hover:bg-[#29292c] focus-visible:border-[#4f46e5] focus-visible:ring-[#4f46e5]/30"
           disabled={isSubmitting || isLoading}
           type="submit"
         >
@@ -216,10 +236,10 @@ export function LoginForm() {
               : "Sign In"}
         </Button>
 
-        <p className="border-t border-[#dfe8e2] pt-5 text-sm font-medium text-[#52635b]">
+        <p className="border-t border-[#e5e7eb] pt-5 text-sm text-[#4b5563]">
           Need a customer account?{" "}
           <Link
-            className="inline-flex min-h-11 items-center rounded-sm font-extrabold text-[#0d7652] underline decoration-2 underline-offset-4 hover:text-[#075d40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d7652] focus-visible:ring-offset-4"
+            className="inline-flex min-h-11 items-center rounded-sm font-semibold text-[#4338ca] underline decoration-2 underline-offset-4 hover:text-[#3730a3] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#4f46e5]"
             to="/customer/register"
           >
             Create customer account
