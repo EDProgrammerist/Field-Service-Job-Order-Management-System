@@ -12,7 +12,6 @@ import {
   Play,
   RefreshCw,
   UserRoundCheck,
-  Wrench,
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -24,30 +23,46 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/auth-context";
 import { getApiErrorDetails } from "@/lib/api-errors";
 import {
   getTechnicianJobOrders,
   getTechnicianSchedule,
 } from "@/services/technician-job-orders";
-import { getMyTechnician } from "@/services/technicians";
-import type { Technician } from "@/types/technician";
 import type { TechnicianJobOrder } from "@/types/technician-job-order";
+
+interface TechnicianDashboardSnapshot {
+  awaitingResponseCount: number;
+  awaitingResponseJobs: TechnicianJobOrder[];
+  acceptedCount: number;
+  inProgressCount: number;
+  scheduledJobs: TechnicianJobOrder[];
+}
 
 interface MetricCardProps {
   label: string;
   value: number;
   description: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentType<{
+    className?: string;
+    "aria-hidden"?: boolean;
+  }>;
+}
+
+interface JobPreviewProps {
+  jobOrder: TechnicianJobOrder;
+  actionLabel: string;
 }
 
 function formatDate(value: string | null) {
   if (!value) return "Not scheduled";
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-PH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -60,36 +75,44 @@ function MetricCard({
   icon: Icon,
 }: MetricCardProps) {
   return (
-    <Card className="gap-0 rounded-none py-0 shadow-none">
-      <CardContent className="flex min-h-44 flex-col justify-between p-5">
-        <div className="flex size-9 items-center justify-center border bg-muted/30">
-          <Icon className="size-4 text-muted-foreground" />
+    <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+      <CardContent className="flex min-h-40 flex-col justify-between p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm text-muted-foreground">
+              {label}
+            </h3>
+            <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+              {value.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="flex size-9 shrink-0 items-center justify-center border bg-muted/30">
+            <Icon
+              aria-hidden={true}
+              className="size-4 text-muted-foreground"
+            />
+          </div>
         </div>
-        <div className="mt-5">
-          <p className="text-3xl font-semibold tracking-tight">
-            {value.toLocaleString()}
-          </p>
-          <p className="mt-1 text-sm font-medium">{label}</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            {description}
-          </p>
-        </div>
+
+        <p className="mt-5 text-xs leading-5 text-muted-foreground">
+          {description}
+        </p>
       </CardContent>
     </Card>
   );
 }
 
-function ScheduledJobCard({
+function JobPreview({
   jobOrder,
-}: {
-  jobOrder: TechnicianJobOrder;
-}) {
+  actionLabel,
+}: JobPreviewProps) {
   return (
-    <article className="border-b p-5 transition-colors hover:bg-muted/30 last:border-b-0">
+    <article className="border-b p-5 last:border-b-0">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               {jobOrder.job_order_number}
             </span>
             <JobOrderStatusBadge status={jobOrder.status} />
@@ -101,9 +124,11 @@ function ScheduledJobCard({
           <h3 className="mt-3 truncate font-medium">
             {jobOrder.title}
           </h3>
+
           <p className="mt-1 truncate text-sm text-muted-foreground">
             {jobOrder.customer.name}
           </p>
+
           <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <CalendarClock
               aria-hidden={true}
@@ -114,6 +139,7 @@ function ScheduledJobCard({
         </div>
 
         <Button
+          className="w-full shrink-0 sm:w-auto"
           render={
             <Link
               to={`/technician/my-jobs/${jobOrder.id}`}
@@ -121,9 +147,8 @@ function ScheduledJobCard({
           }
           size="sm"
           variant="outline"
-          className="w-full shrink-0 sm:w-auto"
         >
-          View job
+          {actionLabel}
           <ArrowRight aria-hidden={true} />
         </Button>
       </div>
@@ -131,15 +156,36 @@ function ScheduledJobCard({
   );
 }
 
+function DashboardSkeleton() {
+  return (
+    <div
+      aria-label="Loading technician dashboard"
+      className="space-y-4"
+      role="status"
+    >
+      <Skeleton className="h-36 w-full rounded-none" />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }, (_, index) => (
+          <Skeleton
+            className="h-40 rounded-none"
+            key={index}
+          />
+        ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Skeleton className="h-80 rounded-none" />
+        <Skeleton className="h-80 rounded-none" />
+      </div>
+    </div>
+  );
+}
+
 export function TechnicianDashboard() {
-  const [technician, setTechnician] =
-    useState<Technician | null>(null);
-  const [awaitingResponseCount, setAwaitingResponseCount] =
-    useState(0);
-  const [acceptedCount, setAcceptedCount] = useState(0);
-  const [inProgressCount, setInProgressCount] = useState(0);
-  const [scheduledJobs, setScheduledJobs] =
-    useState<TechnicianJobOrder[]>([]);
+  const { user } = useAuth();
+  const [snapshot, setSnapshot] =
+    useState<TechnicianDashboardSnapshot | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -149,16 +195,14 @@ export function TechnicianDashboard() {
 
     try {
       const [
-        technicianResponse,
         awaitingResponse,
         acceptedResponse,
         inProgressResponse,
         scheduleResponse,
       ] = await Promise.all([
-        getMyTechnician(),
         getTechnicianJobOrders({
           status: "pending_technician_response",
-          per_page: 1,
+          per_page: 5,
         }),
         getTechnicianJobOrders({
           status: "accepted",
@@ -171,15 +215,14 @@ export function TechnicianDashboard() {
         getTechnicianSchedule(),
       ]);
 
-      setTechnician(technicianResponse.data);
-      setAwaitingResponseCount(
-        awaitingResponse.data.total,
-      );
-      setAcceptedCount(acceptedResponse.data.total);
-      setInProgressCount(inProgressResponse.data.total);
-      setScheduledJobs(
-        scheduleResponse.data.job_orders.slice(0, 5),
-      );
+      setSnapshot({
+        awaitingResponseCount: awaitingResponse.data.total,
+        awaitingResponseJobs: awaitingResponse.data.data,
+        acceptedCount: acceptedResponse.data.total,
+        inProgressCount: inProgressResponse.data.total,
+        scheduledJobs:
+          scheduleResponse.data.job_orders.slice(0, 5),
+      });
     } catch (error) {
       const details = getApiErrorDetails(
         error,
@@ -200,29 +243,10 @@ export function TechnicianDashboard() {
   }, [loadDashboard]);
 
   if (isLoading) {
-    return (
-      <div
-        className="space-y-4"
-        aria-label="Loading technician dashboard"
-      >
-        <Skeleton className="h-36 w-full rounded-none" />
-        <div className="grid gap-4 lg:grid-cols-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton
-              className="h-44 w-full rounded-none"
-              key={index}
-            />
-          ))}
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Skeleton className="h-72 w-full rounded-none" />
-          <Skeleton className="h-72 w-full rounded-none lg:col-span-2" />
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
-  if (errorMessage || !technician) {
+  if (!snapshot) {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center gap-4 border bg-background p-6 text-center">
         <p
@@ -233,9 +257,9 @@ export function TechnicianDashboard() {
             "Technician dashboard is unavailable."}
         </p>
         <Button
+          onClick={() => void loadDashboard()}
           type="button"
           variant="outline"
-          onClick={() => void loadDashboard()}
         >
           <RefreshCw aria-hidden={true} />
           Try again
@@ -251,21 +275,20 @@ export function TechnicianDashboard() {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Technician workspace
           </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-            Welcome, {technician.user.name}
-          </h1>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+            Welcome, {user?.name ?? "Technician"}
+          </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {technician.employee_number} ·{" "}
-            {technician.specialization ??
-              "No specialization listed"}
+            Review schedule decisions and keep track of your
+            assigned work.
           </p>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
+            onClick={() => void loadDashboard()}
             type="button"
             variant="outline"
-            onClick={() => void loadDashboard()}
           >
             <RefreshCw aria-hidden={true} />
             Refresh
@@ -279,118 +302,132 @@ export function TechnicianDashboard() {
         </div>
       </section>
 
+      {errorMessage ? (
+        <p
+          className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          Refresh failed: {errorMessage} The figures below
+          are from the previous load.
+        </p>
+      ) : null}
+
       <section
-        className="grid gap-4 lg:grid-cols-3"
         aria-label="Technician job overview"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
       >
         <MetricCard
           description="Official schedules waiting for your decision."
           icon={UserRoundCheck}
           label="Awaiting response"
-          value={awaitingResponseCount}
+          value={snapshot.awaitingResponseCount}
         />
         <MetricCard
-          description="Accepted service work ready to begin."
+          description="Accepted jobs that have not been started."
           icon={CheckCircle2}
           label="Accepted jobs"
-          value={acceptedCount}
+          value={snapshot.acceptedCount}
         />
         <MetricCard
           description="Service work currently underway."
           icon={Play}
           label="In progress"
-          value={inProgressCount}
+          value={snapshot.inProgressCount}
         />
       </section>
 
-      <section className="grid items-start gap-4 lg:grid-cols-3">
-        <Card className="gap-0 rounded-none py-0 shadow-none">
-          <CardHeader className="flex flex-row items-center gap-2 border-b p-5">
-            <Wrench
-              aria-hidden={true}
-              className="size-4 text-muted-foreground"
-            />
-            <CardTitle className="text-base">
-              Technician profile
+      <section className="grid items-start gap-4 xl:grid-cols-2">
+        <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="flex items-center gap-2">
+              <UserRoundCheck
+                aria-hidden={true}
+                className="size-4 text-muted-foreground"
+              />
+              <h2>Schedules needing your response</h2>
             </CardTitle>
+            <CardDescription>
+              Review the official time before accepting or
+              requesting a change.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 p-5 text-sm">
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Name
-              </p>
-              <p className="mt-1 font-medium">
-                {technician.user.name}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Email
-              </p>
-              <p className="mt-1 break-all">
-                {technician.user.email}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Phone
-              </p>
-              <p className="mt-1">
-                {technician.phone ?? "No phone number"}
-              </p>
-            </div>
-            <p className="border-t pt-4 text-xs text-muted-foreground">
-              {technician.is_active
-                ? "Active technician"
-                : "Inactive technician"}
-            </p>
+
+          <CardContent className="p-0">
+            {snapshot.awaitingResponseJobs.length === 0 ? (
+              <div className="flex min-h-48 flex-col items-center justify-center p-6 text-center">
+                <UserRoundCheck
+                  aria-hidden={true}
+                  className="size-6 text-muted-foreground"
+                />
+                <p className="mt-3 font-medium">
+                  No schedule decisions pending
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  New schedules will appear here when a
+                  dispatcher sends them.
+                </p>
+              </div>
+            ) : (
+              snapshot.awaitingResponseJobs.map((jobOrder) => (
+                <JobPreview
+                  actionLabel="Review schedule"
+                  jobOrder={jobOrder}
+                  key={jobOrder.id}
+                />
+              ))
+            )}
           </CardContent>
         </Card>
 
-        <Card className="gap-0 rounded-none py-0 shadow-none lg:col-span-2">
-          <CardHeader className="flex flex-row items-center gap-2 border-b p-5">
-            <CalendarClock
-              aria-hidden={true}
-              className="size-4 text-muted-foreground"
-            />
-            <CardTitle className="text-base">
-              Upcoming scheduled work
-            </CardTitle>
+        <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+          <CardHeader className="flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarClock
+                  aria-hidden={true}
+                  className="size-4 text-muted-foreground"
+                />
+                <h2>Scheduled work</h2>
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Appointments from your current schedule.
+              </CardDescription>
+            </div>
+
+            <Button
+              render={<Link to="/technician/schedule" />}
+              size="sm"
+              variant="outline"
+            >
+              Full schedule
+              <ArrowRight aria-hidden={true} />
+            </Button>
           </CardHeader>
+
           <CardContent className="p-0">
-            {scheduledJobs.length === 0 ? (
+            {snapshot.scheduledJobs.length === 0 ? (
               <div className="flex min-h-48 flex-col items-center justify-center p-6 text-center">
                 <ClipboardList
                   aria-hidden={true}
                   className="size-6 text-muted-foreground"
                 />
                 <p className="mt-3 font-medium">
-                  No active scheduled work
+                  No scheduled work
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Accepted and in-progress jobs will appear
-                  here.
+                  Appointments will appear here after schedules
+                  are accepted.
                 </p>
               </div>
             ) : (
-              scheduledJobs.map((jobOrder) => (
-                <ScheduledJobCard
+              snapshot.scheduledJobs.map((jobOrder) => (
+                <JobPreview
+                  actionLabel="View job"
                   jobOrder={jobOrder}
                   key={jobOrder.id}
                 />
               ))
             )}
-
-            <div className="border-t p-4">
-              <Button
-                className="w-full"
-                render={<Link to="/technician/schedule" />}
-                variant="outline"
-              >
-                View full schedule
-                <ArrowRight aria-hidden={true} />
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </section>

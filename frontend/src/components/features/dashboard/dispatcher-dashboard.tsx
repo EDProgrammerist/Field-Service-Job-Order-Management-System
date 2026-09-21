@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -40,13 +41,19 @@ interface MetricCardProps {
   label: string;
   value: number;
   description: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentType<{
+    className?: string;
+    "aria-hidden"?: boolean;
+  }>;
 }
 
-function formatDate(value: string | null) {
-  if (!value) return "Not scheduled";
+interface QueueItemProps {
+  jobOrder: DispatcherJobOrder;
+  actionLabel: string;
+}
 
-  return new Intl.DateTimeFormat(undefined, {
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-PH", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -59,20 +66,27 @@ function MetricCard({
   icon: Icon,
 }: MetricCardProps) {
   return (
-    <Card className="gap-0 rounded-none py-0 shadow-none">
-      <CardContent className="flex min-h-44 flex-col justify-between p-5">
-        <div className="flex size-9 items-center justify-center border bg-muted/30">
-          <Icon className="size-4 text-muted-foreground" />
+    <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+      <CardContent className="flex min-h-40 flex-col justify-between p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm text-muted-foreground">
+              {label}
+            </h3>
+            <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+              {value.toLocaleString()}
+            </p>
+          </div>
+          <div className="flex size-9 shrink-0 items-center justify-center border bg-muted/30">
+            <Icon
+              aria-hidden={true}
+              className="size-4 text-muted-foreground"
+            />
+          </div>
         </div>
-        <div className="mt-5">
-          <p className="text-3xl font-semibold tracking-tight">
-            {value.toLocaleString()}
-          </p>
-          <p className="mt-1 text-sm font-medium">{label}</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            {description}
-          </p>
-        </div>
+        <p className="mt-5 text-xs leading-5 text-muted-foreground">
+          {description}
+        </p>
       </CardContent>
     </Card>
   );
@@ -80,15 +94,19 @@ function MetricCard({
 
 function QueueItem({
   jobOrder,
-}: {
-  jobOrder: DispatcherJobOrder;
-}) {
+  actionLabel,
+}: QueueItemProps) {
+  const scheduleLabel =
+    jobOrder.status === "technician_rejected"
+      ? "Previous schedule"
+      : "Scheduled";
+
   return (
-    <article className="border-b p-5 transition-colors hover:bg-muted/30 last:border-b-0">
+    <article className="border-b p-5 last:border-b-0">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium text-muted-foreground">
               {jobOrder.job_order_number}
             </span>
             <JobOrderStatusBadge status={jobOrder.status} />
@@ -97,25 +115,30 @@ function QueueItem({
             />
           </div>
 
-          <p className="mt-3 truncate font-medium">
+          <h3 className="mt-3 truncate font-medium">
             {jobOrder.title}
-          </p>
+          </h3>
           <p className="mt-1 truncate text-sm text-muted-foreground">
+            {jobOrder.customer.name}
+            {" · "}
             {jobOrder.selected_technician?.name ??
               "Technician unavailable"}
-            {" · "}
-            {jobOrder.customer.name}
           </p>
-          <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <CalendarClock
-              aria-hidden={true}
-              className="size-3.5"
-            />
-            {formatDate(jobOrder.scheduled_at)}
-          </p>
+
+          {jobOrder.scheduled_at ? (
+            <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <CalendarClock
+                aria-hidden={true}
+                className="size-3.5"
+              />
+              {scheduleLabel}:{" "}
+              {formatDate(jobOrder.scheduled_at)}
+            </p>
+          ) : null}
         </div>
 
         <Button
+          className="w-full shrink-0 sm:w-auto"
           render={
             <Link
               to={`/dispatcher/job-orders/${jobOrder.id}`}
@@ -123,13 +146,33 @@ function QueueItem({
           }
           size="sm"
           variant="outline"
-          className="w-full shrink-0 sm:w-auto"
         >
-          Review
+          {actionLabel}
           <ArrowRight aria-hidden={true} />
         </Button>
       </div>
     </article>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div
+      aria-label="Loading dispatcher dashboard"
+      className="space-y-4"
+      role="status"
+    >
+      <Skeleton className="h-36 w-full rounded-none" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton className="h-40 rounded-none" key={index} />
+        ))}
+      </div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Skeleton className="h-80 rounded-none" />
+        <Skeleton className="h-80 rounded-none" />
+      </div>
+    </div>
   );
 }
 
@@ -181,29 +224,10 @@ export function DispatcherDashboard() {
   }, [dashboard]);
 
   if (isLoading) {
-    return (
-      <div
-        className="space-y-4"
-        aria-label="Loading dispatcher dashboard"
-      >
-        <Skeleton className="h-36 w-full rounded-none" />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton
-              className="h-44 w-full rounded-none"
-              key={index}
-            />
-          ))}
-        </div>
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Skeleton className="h-80 w-full rounded-none" />
-          <Skeleton className="h-80 w-full rounded-none" />
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
-  if (errorMessage || !dashboard) {
+  if (!dashboard) {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center gap-4 border bg-background p-6 text-center">
         <p
@@ -214,9 +238,9 @@ export function DispatcherDashboard() {
             "Dispatcher dashboard is unavailable."}
         </p>
         <Button
+          onClick={() => void loadDashboard()}
           type="button"
           variant="outline"
-          onClick={() => void loadDashboard()}
         >
           <RefreshCw aria-hidden={true} />
           Try again
@@ -236,20 +260,20 @@ export function DispatcherDashboard() {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Dispatch center
           </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             Welcome back, {user?.name ?? "Dispatcher"}
-          </h1>
+          </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Set official service schedules and monitor requests
-            waiting for technician approval.
+            Set official schedules and track technician
+            responses.
           </p>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
+            onClick={() => void loadDashboard()}
             type="button"
             variant="outline"
-            onClick={() => void loadDashboard()}
           >
             <RefreshCw aria-hidden={true} />
             Refresh
@@ -263,27 +287,37 @@ export function DispatcherDashboard() {
         </div>
       </section>
 
+      {errorMessage ? (
+        <p
+          className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          Refresh failed: {errorMessage} The figures below
+          are from the previous load.
+        </p>
+      ) : null}
+
       <section
-        className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
         aria-label="Dispatch overview"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
       >
         <MetricCard
-          description="New and rejected requests that need an official schedule."
+          description="Requests that have not received an official schedule."
           icon={CalendarClock}
-          label="Needs scheduling"
-          value={needsSchedulingCount}
+          label="New requests"
+          value={dashboard.pendingScheduleCount}
         />
         <MetricCard
-          description="Schedules waiting for the selected technician to respond."
-          icon={UserRoundCheck}
-          label="Awaiting technician"
-          value={dashboard.awaitingTechnicianCount}
-        />
-        <MetricCard
-          description="Technician-rejected schedules ready for a new date."
+          description="Schedules rejected by technicians that need another date."
           icon={RotateCcw}
           label="Rejected schedules"
           value={dashboard.rejectedScheduleCount}
+        />
+        <MetricCard
+          description="Scheduled requests waiting for the technician's decision."
+          icon={UserRoundCheck}
+          label="Awaiting technician"
+          value={dashboard.awaitingTechnicianCount}
         />
         <MetricCard
           description="Technicians currently active in the directory."
@@ -294,15 +328,22 @@ export function DispatcherDashboard() {
       </section>
 
       <section className="grid items-start gap-4 xl:grid-cols-2">
-        <Card className="gap-0 rounded-none py-0 shadow-none">
-          <CardHeader className="flex flex-row items-center gap-2 border-b p-5">
-            <ClipboardList
-              aria-hidden={true}
-              className="size-4 text-muted-foreground"
-            />
-            <CardTitle className="text-base">
-              Needs scheduling
+        <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList
+                aria-hidden={true}
+                className="size-4 text-muted-foreground"
+              />
+              <h2>Needs scheduling</h2>
             </CardTitle>
+            <CardDescription>
+              {needsSchedulingCount.toLocaleString()} total:{" "}
+              {dashboard.pendingScheduleCount.toLocaleString()} new
+              {" + "}
+              {dashboard.rejectedScheduleCount.toLocaleString()} rejected.
+              Showing up to five oldest requests.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {needsScheduling.length === 0 ? (
@@ -321,38 +362,30 @@ export function DispatcherDashboard() {
             ) : (
               needsScheduling.map((jobOrder) => (
                 <QueueItem
+                  actionLabel="Review"
                   jobOrder={jobOrder}
                   key={jobOrder.id}
                 />
               ))
             )}
-
-            <div className="border-t p-4">
-              <Button
-                className="w-full"
-                render={<Link to="/dispatcher/job-orders" />}
-                variant="outline"
-              >
-                View scheduling queue
-                <ArrowRight aria-hidden={true} />
-              </Button>
-            </div>
           </CardContent>
         </Card>
 
-        <Card className="gap-0 rounded-none py-0 shadow-none">
-          <CardHeader className="flex flex-row items-center gap-2 border-b p-5">
-            <UserRoundCheck
-              aria-hidden={true}
-              className="size-4 text-muted-foreground"
-            />
-            <CardTitle className="text-base">
-              Awaiting technician response
+        <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+          <CardHeader className="border-b p-5">
+            <CardTitle className="flex items-center gap-2">
+              <UserRoundCheck
+                aria-hidden={true}
+                className="size-4 text-muted-foreground"
+              />
+              <h2>Awaiting technician response</h2>
             </CardTitle>
+            <CardDescription>
+              Schedules already sent to technicians for a decision.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            {dashboard.awaitingTechnicianRequests.length ===
-            0 ? (
+            {dashboard.awaitingTechnicianRequests.length === 0 ? (
               <div className="flex min-h-48 flex-col items-center justify-center p-6 text-center">
                 <UserRoundCheck
                   aria-hidden={true}
@@ -370,6 +403,7 @@ export function DispatcherDashboard() {
               dashboard.awaitingTechnicianRequests.map(
                 (jobOrder) => (
                   <QueueItem
+                    actionLabel="View"
                     jobOrder={jobOrder}
                     key={jobOrder.id}
                   />

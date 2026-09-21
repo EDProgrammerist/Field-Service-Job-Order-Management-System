@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   type ComponentType,
 } from "react";
@@ -16,7 +15,10 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 
-import { Badge } from "@/components/ui/badge";
+import {
+  JobOrderPriorityBadge,
+  JobOrderStatusBadge,
+} from "@/components/features/job-orders/job-order-badges";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -36,63 +39,15 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { getAdminDashboardData } from "@/services/dashboard";
 import type { AdminDashboardData } from "@/types/dashboard";
-import type {
-  JobOrderPriority,
-  JobOrderStatus,
-} from "@/types/job-order";
 
-interface DashboardMetricCardProps {
+interface StatCardProps {
   label: string;
   value: number;
   description: string;
-  href: string;
-  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-}
-
-interface StatusOverviewItem {
-  label: string;
-  value: number;
-  className: string;
-}
-
-const statusClassNames: Record<JobOrderStatus, string> = {
-  pending_schedule:
-    "border-amber-200 bg-amber-50 text-amber-700",
-  pending_technician_response:
-    "border-blue-200 bg-blue-50 text-blue-700",
-  accepted:
-    "border-emerald-200 bg-emerald-50 text-emerald-700",
-  technician_rejected:
-    "border-red-200 bg-red-50 text-red-700",
-  in_progress:
-    "border-amber-200 bg-amber-50 text-amber-700",
-  completed:
-    "border-emerald-200 bg-emerald-50 text-emerald-700",
-  closed:
-    "border-violet-200 bg-violet-50 text-violet-700",
-  cancelled:
-    "border-red-200 bg-red-50 text-red-700",
-
-  pending_review:
-    "border-amber-200 bg-amber-50 text-amber-700",
-  created:
-    "border-slate-300 bg-slate-100 text-slate-700",
-  assigned:
-    "border-blue-200 bg-blue-50 text-blue-700",
-};
-
-const priorityClassNames: Record<JobOrderPriority, string> = {
-  low: "border-slate-300 bg-slate-100 text-slate-700",
-  normal: "border-blue-200 bg-blue-50 text-blue-700",
-  high: "border-orange-200 bg-orange-50 text-orange-700",
-  urgent: "border-red-200 bg-red-50 text-red-700",
-};
-
-function formatLabel(value: string) {
-  return value
-    .split("_")
-    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(" ");
+  icon: ComponentType<{
+    className?: string;
+    "aria-hidden"?: boolean;
+  }>;
 }
 
 function formatScheduledDate(value: string | null) {
@@ -109,117 +64,67 @@ function formatScheduledDate(value: string | null) {
 function getGreeting() {
   const hour = new Date().getHours();
 
-  if (hour < 12) {
-    return "Good morning";
-  }
-
-  if (hour < 18) {
-    return "Good afternoon";
-  }
-
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
   return "Good evening";
 }
 
-function getPercentage(value: number, total: number) {
-  if (total <= 0) {
-    return 0;
-  }
-
-  return Math.min(100, Math.round((value / total) * 100));
-}
-
-function DashboardCard({
-  className = "",
-  ...props
-}: React.ComponentProps<typeof Card>) {
-  return (
-    <Card
-      className={[
-        "gap-0 rounded-none bg-background py-0 shadow-none ring-0",
-        className,
-      ].join(" ")}
-      {...props}
-    />
-  );
-}
-
-function MetricCard({
+function StatCard({
   label,
   value,
   description,
-  href,
   icon: Icon,
-}: DashboardMetricCardProps) {
+}: StatCardProps) {
   return (
-    <DashboardCard className="min-h-48 xl:col-span-4">
-      <CardContent className="flex h-full flex-col justify-between p-5">
+    <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+      <CardContent className="flex min-h-40 flex-col justify-between p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">{label}</p>
-
-            <p className="mt-2 text-3xl font-semibold tracking-tight">
+            <h3 className="text-sm text-muted-foreground">{label}</h3>
+            <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
               {value.toLocaleString()}
             </p>
           </div>
 
-          <div className="flex size-9 items-center justify-center rounded-md border bg-background">
+          <div className="flex size-9 shrink-0 items-center justify-center border bg-muted/30">
             <Icon aria-hidden={true} className="size-4" />
           </div>
         </div>
 
-        <div className="mt-8 flex items-end justify-between gap-4">
-          <p className="max-w-44 text-xs leading-5 text-muted-foreground">
-            {description}
-          </p>
-
-          <Button
-            render={<Link to={href} />}
-            size="sm"
-            variant="outline"
-          >
-            View
-            <ArrowRight aria-hidden="true" />
-          </Button>
-        </div>
+        <p className="mt-5 text-xs leading-5 text-muted-foreground">
+          {description}
+        </p>
       </CardContent>
-    </DashboardCard>
+    </Card>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="h-6 w-52 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-4 w-72 max-w-full animate-pulse rounded bg-muted" />
-        </div>
+    <div
+      aria-label="Loading admin dashboard"
+      className="space-y-4"
+      role="status"
+    >
+      <Skeleton className="h-16 w-full rounded-none" />
 
-        <div className="h-9 w-40 animate-pulse rounded bg-muted" />
-      </div>
-
-      <div className="h-24 animate-pulse rounded-none bg-muted" />
-
-      <div className="grid gap-px bg-border p-px xl:grid-cols-12">
-        <div className="min-h-80 animate-pulse bg-background xl:col-span-7" />
-        <div className="min-h-80 animate-pulse bg-background xl:col-span-5" />
-
-        {Array.from({ length: 3 }).map((_, index) => (
-          <div
-            className="min-h-48 animate-pulse bg-background xl:col-span-4"
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton
+            className="h-40 rounded-none"
             key={index}
           />
         ))}
       </div>
 
-      <div className="h-96 animate-pulse rounded-none bg-muted" />
+      <Skeleton className="h-80 w-full rounded-none" />
+      <Skeleton className="h-44 w-full rounded-none" />
     </div>
   );
 }
 
 export function AdminDashboard() {
   const { user } = useAuth();
-
   const [dashboard, setDashboard] =
     useState<AdminDashboardData | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -230,8 +135,8 @@ export function AdminDashboard() {
     setErrorMessage("");
 
     try {
-      const dashboardData = await getAdminDashboardData();
-      setDashboard(dashboardData);
+      const data = await getAdminDashboardData();
+      setDashboard(data);
     } catch {
       setErrorMessage(
         "Unable to load dashboard data. Check the Laravel API connection and try again.",
@@ -252,398 +157,257 @@ export function AdminDashboard() {
   const administratorName =
     user?.name?.trim().split(/\s+/)[0] || "Administrator";
 
-  const statusOverview = useMemo<StatusOverviewItem[]>(() => {
-    if (!dashboard) {
-      return [];
-    }
-
-    return [
-      {
-        label: "Pending schedule",
-        value: dashboard.pendingScheduleJobOrders,
-        className: "bg-slate-700",
-      },
-      {
-        label: "In progress",
-        value: dashboard.inProgressJobOrders,
-        className: "bg-amber-500",
-      },
-      {
-        label: "Completed",
-        value: dashboard.completedJobOrders,
-        className: "bg-emerald-600",
-      },
-    ];
-  }, [dashboard]);
-
   if (isLoading) {
     return <DashboardSkeleton />;
   }
 
   if (!dashboard) {
     return (
-      <div className="mx-auto max-w-xl pt-12">
-        <Card className="rounded-none shadow-none">
-          <CardHeader>
-            <CardTitle>Dashboard data unavailable</CardTitle>
-            <CardDescription>{errorMessage}</CardDescription>
-          </CardHeader>
+      <Card className="mx-auto max-w-xl rounded-none py-0 shadow-none">
+        <CardHeader className="border-b p-5">
+          <CardTitle>Dashboard data unavailable</CardTitle>
+          <CardDescription role="alert">
+            {errorMessage}
+          </CardDescription>
+        </CardHeader>
 
-          <CardContent>
-            <Button type="button" onClick={loadDashboard}>
-              <RefreshCcw aria-hidden="true" />
-              Try again
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+        <CardContent className="p-5">
+          <Button type="button" onClick={() => void loadDashboard()}>
+            <RefreshCcw aria-hidden={true} />
+            Try again
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Page heading */}
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
             {getGreeting()}, {administratorName}
           </h2>
-
           <p className="mt-1 text-sm text-muted-foreground">
-            Monitor job orders, customers, and field operations.
+            Monitor job orders and service records.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            aria-label="Refresh dashboard"
-            onClick={loadDashboard}
+            aria-label="Refresh admin dashboard"
+            onClick={() => void loadDashboard()}
             size="icon"
             type="button"
             variant="outline"
           >
-            <RefreshCcw aria-hidden="true" />
+            <RefreshCcw aria-hidden={true} />
           </Button>
-
-
-        </div>
-      </section>
-
-      {/* Operational update */}
-      <DashboardCard className="ring-1 ring-border">
-        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="size-2 rounded-full bg-emerald-600"
-              />
-
-              <p className="text-sm font-medium">Operations update</p>
-
-              <span className="text-xs text-muted-foreground">
-                {new Intl.DateTimeFormat("en-PH", {
-                  dateStyle: "medium",
-                }).format(new Date())}
-              </span>
-            </div>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              {dashboard.inProgressJobOrders.toLocaleString()} active jobs and{" "}
-              {dashboard.pendingScheduleJobOrders.toLocaleString()} waiting for
-              assignment.
-            </p>
-          </div>
 
           <Button
             render={<Link to="/admin/job-orders" />}
-            size="sm"
             variant="outline"
           >
-            Review jobs
-            <ArrowRight aria-hidden="true" />
+            View job orders
+            <ArrowRight aria-hidden={true} />
           </Button>
-        </CardContent>
-      </DashboardCard>
+        </div>
+      </section>
 
-      {/* Main dashboard grid */}
-      <section className="grid gap-px bg-border p-px xl:grid-cols-12">
-        {/* Job order status overview */}
-        <DashboardCard className="xl:col-span-7">
-          <CardHeader className="border-b p-5">
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardList
-                aria-hidden="true"
-                className="size-4 text-muted-foreground"
-              />
-              Job order overview
-            </CardTitle>
+      {errorMessage ? (
+        <p
+          className="border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+        >
+          Refresh failed. The figures below are from the previous load.
+        </p>
+      ) : null}
 
-            <CardDescription>
-              Current progress across the job order workflow.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="p-5">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm text-muted-foreground">
-                Total job orders
-              </p>
-
-              <p className="text-3xl font-semibold tracking-tight">
-                {dashboard.totalJobOrders.toLocaleString()}
-              </p>
-            </div>
-
-            <div className="mt-8 space-y-6">
-              {statusOverview.map((item) => {
-                const percentage = getPercentage(
-                  item.value,
-                  dashboard.totalJobOrders,
-                );
-
-                return (
-                  <div key={item.label}>
-                    <div className="mb-2 flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium">{item.label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {percentage}% of all job orders
-                        </p>
-                      </div>
-
-                      <p className="font-mono text-sm font-semibold tabular-nums">
-                        {item.value.toLocaleString()}
-                      </p>
-                    </div>
-
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={`h-full rounded-full ${item.className}`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </DashboardCard>
-
-        {/* Records grid */}
-        <DashboardCard className="xl:col-span-5">
-          <CardHeader className="border-b p-5">
-            <CardTitle className="flex items-center gap-2">
-              <Users
-                aria-hidden="true"
-                className="size-4 text-muted-foreground"
-              />
-              Total records
-            </CardTitle>
-
-            <CardDescription>
-              Key records currently stored in the system.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <div className="grid grid-cols-2 gap-px bg-border">
-              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
-                <ClipboardList
-                  aria-hidden="true"
-                  className="size-4 text-muted-foreground"
-                />
-
-                <div>
-                  <p className="text-2xl font-semibold">
-                    {dashboard.totalJobOrders.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Job orders
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
-                <Users
-                  aria-hidden="true"
-                  className="size-4 text-muted-foreground"
-                />
-
-                <div>
-                  <p className="text-2xl font-semibold">
-                    {dashboard.totalCustomers.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Customers
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
-                <Wrench
-                  aria-hidden="true"
-                  className="size-4 text-muted-foreground"
-                />
-
-                <div>
-                  <p className="text-2xl font-semibold">
-                    {dashboard.totalTechnicians.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Technicians
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex min-h-32 flex-col justify-between bg-background p-5">
-                <CheckCircle2
-                  aria-hidden="true"
-                  className="size-4 text-muted-foreground"
-                />
-
-                <div>
-                  <p className="text-2xl font-semibold">
-                    {dashboard.completedJobOrders.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Completed jobs
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </DashboardCard>
-
-        <MetricCard
-          description="Customer requests awaiting an official dispatcher schedule."
-          href="/admin/job-orders"
+      <section
+        aria-label="Job order snapshot"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <StatCard
+          description="All job orders recorded in the system."
+          icon={ClipboardList}
+          label="Total job orders"
+          value={dashboard.totalJobOrders}
+        />
+        <StatCard
+          description="Requests awaiting an official dispatcher schedule."
           icon={Clock3}
           label="Pending schedule"
           value={dashboard.pendingScheduleJobOrders}
         />
-
-        <MetricCard
-          description="Jobs currently being handled by field technicians."
-          href="/admin/job-orders"
+        <StatCard
+          description="Service work currently underway."
           icon={Wrench}
-          label="Jobs in progress"
+          label="In progress"
           value={dashboard.inProgressJobOrders}
         />
-
-        <MetricCard
-          description="Job orders successfully completed by the service team."
-          href="/admin/job-orders"
+        <StatCard
+          description="Jobs completed by the service team."
           icon={CheckCircle2}
-          label="Completed jobs"
+          label="Completed"
           value={dashboard.completedJobOrders}
         />
       </section>
 
-      {/* Recent job orders */}
-      <section>
-        <DashboardCard className="ring-1 ring-border">
-          <CardHeader className="border-b p-5">
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardList
-                aria-hidden="true"
-                className="size-4 text-muted-foreground"
-              />
-              Recent job orders
-            </CardTitle>
+      <section aria-labelledby="recent-job-orders-title">
+        <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+          <CardHeader className="flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>
+                <h2 id="recent-job-orders-title">
+                  Recent job orders
+                </h2>
+              </CardTitle>
+              <CardDescription className="mt-1">
+                The five most recently created job orders.
+              </CardDescription>
+            </div>
 
-            <CardDescription>
-              The five most recently created job orders.
-            </CardDescription>
+            <Button
+              render={<Link to="/admin/job-orders" />}
+              size="sm"
+              variant="outline"
+            >
+              View all
+              <ArrowRight aria-hidden={true} />
+            </Button>
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table className="min-w-210">
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-5">Job order</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Scheduled</TableHead>
-                    <TableHead className="pr-5 text-right">
-                      Action
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
+            <Table className="min-w-210">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-5">Job order</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Scheduled</TableHead>
+                  <TableHead className="pr-5 text-right">
+                    Action
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
 
-                <TableBody>
-                  {dashboard.recentJobOrders.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        className="py-14 text-center text-muted-foreground"
-                        colSpan={6}
-                      >
-                        No job orders have been created yet.
+              <TableBody>
+                {dashboard.recentJobOrders.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      className="py-14 text-center text-muted-foreground"
+                      colSpan={6}
+                    >
+                      No job orders have been created yet.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  dashboard.recentJobOrders.map((jobOrder) => (
+                    <TableRow key={jobOrder.id}>
+                      <TableCell className="pl-5">
+                        <p className="font-medium">
+                          {jobOrder.job_order_number}
+                        </p>
+                        <p className="mt-1 max-w-60 truncate text-xs text-muted-foreground">
+                          {jobOrder.title}
+                        </p>
+                      </TableCell>
+
+                      <TableCell>
+                        {jobOrder.customer.name}
+                      </TableCell>
+
+                      <TableCell>
+                        <JobOrderStatusBadge
+                          status={jobOrder.status}
+                        />
+                      </TableCell>
+
+                      <TableCell>
+                        <JobOrderPriorityBadge
+                          priority={jobOrder.priority}
+                        />
+                      </TableCell>
+
+                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                        {formatScheduledDate(jobOrder.scheduled_at)}
+                      </TableCell>
+
+                      <TableCell className="pr-5 text-right">
+                        <Button
+                          render={
+                            <Link
+                              to={`/admin/job-orders/${jobOrder.id}`}
+                            />
+                          }
+                          size="sm"
+                          variant="ghost"
+                        >
+                          View
+                          <ArrowRight aria-hidden={true} />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    dashboard.recentJobOrders.map((jobOrder) => (
-                      <TableRow key={jobOrder.id}>
-                        <TableCell className="pl-5">
-                          <p className="font-medium">
-                            {jobOrder.job_order_number}
-                          </p>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </section>
 
-                          <p className="mt-1 max-w-60 truncate text-xs text-muted-foreground">
-                            {jobOrder.title}
-                          </p>
-                        </TableCell>
+      <section aria-labelledby="directory-title">
+        <Card className="gap-0 rounded-none bg-background py-0 shadow-none">
+          <CardHeader className="border-b p-5">
+            <CardTitle>
+              <h2 id="directory-title">People directory</h2>
+            </CardTitle>
+            <CardDescription>
+              Customer and technician records.
+            </CardDescription>
+          </CardHeader>
 
-                        <TableCell>
-                          {jobOrder.customer.name}
-                        </TableCell>
+          <CardContent className="grid gap-px bg-border p-0 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-4 bg-background p-5">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Customers
+                </p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">
+                  {dashboard.totalCustomers.toLocaleString()}
+                </p>
+              </div>
+              <Button
+                render={<Link to="/admin/customers" />}
+                size="sm"
+                variant="outline"
+              >
+                <Users aria-hidden={true} />
+                View
+              </Button>
+            </div>
 
-                        <TableCell>
-                          <Badge
-                            className={statusClassNames[jobOrder.status]}
-                            variant="outline"
-                          >
-                            {formatLabel(jobOrder.status)}
-                          </Badge>
-                        </TableCell>
-
-                        <TableCell>
-                          <Badge
-                            className={priorityClassNames[jobOrder.priority]}
-                            variant="outline"
-                          >
-                            {formatLabel(jobOrder.priority)}
-                          </Badge>
-                        </TableCell>
-
-                        <TableCell className="whitespace-nowrap text-muted-foreground">
-                          {formatScheduledDate(jobOrder.scheduled_at)}
-                        </TableCell>
-
-                        <TableCell className="pr-5 text-right">
-                          <Button
-                            render={
-                              <Link
-                                to={`/admin/job-orders/${jobOrder.id}`}
-                              />
-                            }
-                            size="sm"
-                            variant="ghost"
-                          >
-                            View
-                            <ArrowRight aria-hidden="true" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+            <div className="flex items-center justify-between gap-4 bg-background p-5">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Technicians
+                </p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">
+                  {dashboard.totalTechnicians.toLocaleString()}
+                </p>
+              </div>
+              <Button
+                render={<Link to="/admin/technicians" />}
+                size="sm"
+                variant="outline"
+              >
+                <Wrench aria-hidden={true} />
+                View
+              </Button>
             </div>
           </CardContent>
-        </DashboardCard>
+        </Card>
       </section>
     </div>
   );
