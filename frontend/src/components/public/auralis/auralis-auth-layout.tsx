@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 
 import { AuralisBackdrop } from "@/components/public/auralis/auralis-backdrop";
+import { AuralisAuthVisual } from "@/components/public/auralis/auralis-auth-visual";
 import { AuralisPublicHeader } from "@/components/public/auralis/auralis-public-header";
 
 interface AuralisAuthLayoutProps {
@@ -29,21 +30,23 @@ export function AuralisAuthLayout({
         />
 
         <main
-          className={
-            isRegistration
-              ? "flex flex-1 items-start pb-16 pt-8 md:pt-12"
-              : "flex flex-1 items-center pb-16 pt-8 md:pt-12"
-          }
+          className={[
+            "grid flex-1 gap-8 pb-16 pt-4 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.78fr)] lg:gap-12 lg:pt-12",
+            isRegistration ? "items-start" : "items-center",
+          ].join(" ")}
         >
           <div
-            className={
+            className={[
+              "order-last lg:order-first",
               isRegistration
                 ? "w-full max-w-[680px]"
-                : "w-full max-w-[520px]"
-            }
+                : "w-full max-w-[520px]",
+            ].join(" ")}
           >
             {children}
           </div>
+
+          <AuralisAuthVisual variant={variant} />
         </main>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { ServicesSection } from "@/components/public/home/services-section";
 import { WorkflowSection } from "@/components/public/home/workflow-section";
 import { ContactSection } from "@/components/public/home/contact-section";
 import { PublicFooter } from "@/components/public/home/public-footer";
+import { publicMedia } from "@/content/public-media";
 
 const features = [
   {
@@ -41,7 +42,7 @@ export default function HomePage() {
       <div className="relative z-[1] mx-auto flex min-h-[100dvh] w-full max-w-[88rem] flex-col px-6 sm:px-8 md:px-12 lg:px-16">
         <AuralisPublicHeader />
 
-        <main className="flex flex-1 flex-col justify-center pb-16 pt-12 md:pb-20 md:pt-16">
+        <main className="grid flex-1 items-center gap-8 pb-12 pt-8 lg:grid-cols-[minmax(0,0.94fr)_minmax(24rem,1.06fr)] lg:gap-6 lg:py-10">
           <div className="max-w-2xl">
             <div
               className="auralis-enter mb-8 inline-flex w-max items-center gap-2 rounded-full border border-indigo-200/80 bg-indigo-50/50 px-3.5 py-1.5 text-xs font-medium text-[#4f46e5] shadow-sm backdrop-blur-md"
@@ -96,6 +97,26 @@ export default function HomePage() {
               </a>
             </div>
           </div>
+
+          <figure
+            className="auralis-enter relative flex h-64 items-end justify-center overflow-visible sm:h-72 lg:h-[min(48vh,36rem)] lg:min-h-[24rem]"
+            style={{ animationDelay: "640ms" }}
+          >
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-[12%] bottom-[6%] h-[62%] rounded-full bg-gradient-to-t from-indigo-300/40 via-cyan-200/25 to-transparent blur-3xl"
+            />
+            <img
+              alt={publicMedia.homeHero.alt}
+              className="relative h-full w-full scale-[1.05] object-contain object-bottom drop-shadow-[0_26px_34px_rgba(31,41,55,0.16)] sm:scale-100 lg:origin-right lg:scale-[1.06]"
+              decoding="async"
+              fetchPriority={publicMedia.homeHero.fetchPriority}
+              height={publicMedia.homeHero.height}
+              loading={publicMedia.homeHero.loading}
+              src={publicMedia.homeHero.src}
+              width={publicMedia.homeHero.width}
+            />
+          </figure>
         </main>
 
         <section
