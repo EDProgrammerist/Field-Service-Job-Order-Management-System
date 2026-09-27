@@ -430,4 +430,4 @@ This project demonstrates several useful full-stack practices:
 
 ## Current scope
 
-This repository is a learning and portfolio project. Before production deployment, review environment secrets, token storage, HTTPS, rate limiting, mail delivery, background queues, monitoring, database backups, file uploads, and deployment-specific CORS settings.
+This repository is a learning and midterm project. Before production deployment, review environment secrets, token storage, HTTPS, rate limiting, mail delivery, background queues, monitoring, database backups, file uploads, and deployment-specific CORS settings.
